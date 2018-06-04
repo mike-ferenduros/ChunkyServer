@@ -5,6 +5,8 @@ util = require('util')
 uuidv4 = require('uuid/v4')
 
 
+let server = null
+
 
 configPath = app.getPath('userData') + '/config.json'
 
@@ -62,6 +64,14 @@ function checkPath(path, client) {
 
 
 
+let lastSentAddresses = JSON.stringify([])
+function updateServerAddresses() {
+	addresses = JSON.stringify(server ? server.addresses() : [])
+	if (addresses != lastSentAddresses) {
+		lastSentAddresses = addresses
+		console.log('Local addresses changed to '+lastSentAddresses)
+	}
+}
 
 
 
@@ -134,7 +144,13 @@ function handleClaim(req,res) {
 
 
 
-let server = null
+function serverStateChanged() {
+	if (mainWindow) {
+		mainWindow.send('server-state-change')
+	}
+
+	updateServerAddresses()
+}
 
 function startServer() {
 
@@ -150,6 +166,7 @@ function startServer() {
 
 	server.on('public-address-changed', serverStateChanged)
 	server.on('started', serverStateChanged)
+
 	serverStateChanged()
 }
 
@@ -157,13 +174,8 @@ function stopServer() {
 	if (server) {
 		server.stop()
 		server = null
-		serverStateChanged()
-	}
-}
 
-function serverStateChanged() {
-	if (mainWindow) {
-		mainWindow.send('server-state-change')
+		serverStateChanged()
 	}
 }
 

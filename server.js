@@ -114,6 +114,32 @@ Server.prototype.setPublicIP = function(ip) {
 	}
 }
 
+Server.prototype.localAddresses = function(port) {
+	result = []
+	interfaces = os.networkInterfaces()
+	for (name in interfaces) {
+		for (address of interfaces[name]) {
+			if (!address.internal && address.family=='IPv4') {
+				result.push(address.address+':'+port)
+			}
+		}
+	}
+	return result
+}
+
+Server.prototype.addresses = function() {
+	if (this.privatePort == null) {
+		return []
+	}
+
+	addresses = this.localAddresses(this.privatePort)
+
+	if (this.publicIP && this.publicPort) {
+		addresses.unshift(this.publicIP+':'+this.publicPort)
+	}
+	return addresses
+}
+
 Server.prototype.createMapping = function(publicPort, retries, cb) {
 	console.log('Creating mapping')
 	this.upnp.portMapping({public: publicPort, private: this.privatePort, ttl: this.ttl}, (err) => {
