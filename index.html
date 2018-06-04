@@ -33,10 +33,11 @@
 			}
 			ipcRenderer.on('update-folders', updateFolders)
 
-			function updateClients() {}
+			function updateClients() {
 				$('ul#clients').empty()
 				for (client of remote.getGlobal('config').clients) {
 					$('ul#clients').append('<li>'+client.name+'</li>')
+				}
 			}
 			ipcRenderer.on('update-clients', updateClients)
 

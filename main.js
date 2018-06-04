@@ -140,14 +140,19 @@ ipcMain.on('offer', offer)
 
 
 function handleClaim(req,res) {
-	if (global.offerKey && req.headers.authorization == global.offerKey && req.query.name) {
+	console.log(req.headers)
+	console.log(req.body)
 
-		newClient = {key: offeredKey, name: req.query.name}
+	if (global.offerKey && req.headers.authorization == global.offerKey && req.body.name && req.body.id) {
+
+		newClient = {key: global.offerKey, name: req.body.name, id: req.body.id}
 
 		cancelOffer()
 
 		global.config.clients.push(newClient)
 		saveConfig()
+
+		clientsChanged()
 
 		res.status(200).send('ok')
 	} else {
@@ -178,6 +183,11 @@ function serverStateChanged() {
 	}
 }
 
+function clientsChanged() {
+	if (mainWindow) {
+		mainWindow.send('update-clients')
+	}
+}
 
 
 function startServer() {

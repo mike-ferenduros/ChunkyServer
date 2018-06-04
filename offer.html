@@ -22,7 +22,7 @@
 				$('div#key').text(key)
 
 				qrbody = ['chunky',serverid,key].concat(addresses).join('/').toUpperCase()
-				qrcode.toDataURL(qrbody, {errorCorrectionLevel: 'L', }, (err,url) => {
+				qrcode.toDataURL(qrbody, {errorCorrectionLevel: 'L'}, (err,url) => {
 					$('img#qrcode').attr('src', url)
 				})
 			}

@@ -3,6 +3,7 @@ fs = require('fs')
 util = require('util')
 uuidv4 = require('uuid/v4')
 express = require('express')
+bodyParser = require('body-parser')
 upnp = require('nat-upnp')
 
 EventEmitter = require('events')
@@ -17,6 +18,9 @@ function Server(port, ttl) {
 	EventEmitter.call(this)
 
 	this.server = express()
+	this.server.use(bodyParser.urlencoded())
+	this.server.use(bodyParser.json())
+	this.server.use(bodyParser())
 
 	this.ttl = ttl || 600
 	this.privatePort = null
@@ -121,7 +125,7 @@ Server.prototype.localAddresses = function(port) {
 	interfaces = os.networkInterfaces()
 	for (name in interfaces) {
 		for (address of interfaces[name]) {
-			if (!address.internal && address.family=='IPv4') {
+			if (!address.internal && address.family=='IPv4' && !address.address.startsWith('169.254.')) {
 				result.push(address.address+':'+port)
 			}
 		}
