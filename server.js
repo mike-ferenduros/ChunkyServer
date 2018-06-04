@@ -32,8 +32,9 @@ function Server(port, ttl) {
 		this.privatePort = this.listener.address().port
 
 		this.upnp = upnp.createClient()
-		this.refreshPublicIP()
-		this.refreshMapping()
+		this.refreshPublicIP(() => {
+			this.refreshMapping()
+		})
 
 		this.emit('started')
 		console.log('Listening on port '+this.privatePort)
@@ -59,7 +60,7 @@ Server.prototype.stop = function() {
 	this.running = false
 }
 
-Server.prototype.refreshPublicIP = function() {
+Server.prototype.refreshPublicIP = function(cb) {
 	if (!this.running) {
 		return
 	}
@@ -67,6 +68,7 @@ Server.prototype.refreshPublicIP = function() {
 		if (ip) {
 			this.setPublicIP(ip)
 		}
+		cb(err, ip)
 	})
 }
 
@@ -164,8 +166,9 @@ Server.prototype.refreshMapping = function() {
 	console.log('Refreshing mapping')
 	this.getMapping((err, mapping) => {
 		if (mapping) {
+			this.setPublicPort(mapping.public.port)
 			console.log('Existing mapping valid for another '+mapping.ttl+'s')
-			this.setMappingTimeoutingAfter(mapping.ttl+1)
+			this.setMappingTimeout(mapping.ttl+1)
 		} else {
 			this.createMapping(this.privatePort, 8, (err) => {
 				console.log('Checking new mapping')

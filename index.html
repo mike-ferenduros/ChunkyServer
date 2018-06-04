@@ -1,13 +1,62 @@
 <!DOCTYPE html>
-  <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>Hello World!</title>
-    </head>
-    <body>
-      <h1>Hello World!</h1>
-      We are using node <script>document.write(process.versions.node)</script>,
-      Chrome <script>document.write(process.versions.chrome)</script>,
-      and Electron <script>document.write(process.versions.electron)</script>.
-    </body>
-  </html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Hello World!</title>
+		<script>
+		window.$ = window.jQuery = require('jquery')
+		const {ipcRenderer, remote} = require('electron')
+		</script>
+	</head>
+	<body>
+		<h1>Hello World!</h1>
+
+		<ul id='folders'></ul>
+
+		<ul id='clients'></ul>
+
+		<div id='server'>
+			<span class='status'></span>
+			<span class='nat'></span>
+			<button class='stop'>Stop</button>
+			<button class='start'>Start</button>
+		</div>
+
+		<button id='offer'>Add client</button>
+
+		<script>
+			function updateFolders() {
+				$('ul#folders').empty()
+				for (folder of remote.getGlobal('config').folders) {
+					$('ul#folders').append('<li>'+folder.name+'</li>')
+				}
+			}
+			ipcRenderer.on('update-folders', updateFolders)
+
+			function updateClients() {}
+				$('ul#clients').empty()
+				for (client of remote.getGlobal('config').clients) {
+					$('ul#clients').append('<li>'+client.name+'</li>')
+			}
+			ipcRenderer.on('update-clients', updateClients)
+
+			function updateServer() {
+				serverState = remote.getGlobal('serverState')
+				$('div#server').toggleClass('running', serverState.running)
+				$('div#server .status').text(serverState.status)
+				$('div#server .nat').text(serverState.natStatus)
+			}
+			ipcRenderer.on('update-server', updateServer)
+
+			$('div#server button.stop').click(() => ipcRenderer.send('stop-server'))
+			$('div#server button.start').click(() => ipcRenderer.send('start-server'))
+			$('button#offer').click(() => ipcRenderer.send('offer'))
+
+
+
+			updateFolders()
+			updateClients()
+			updateServer()
+		</script>
+	</body>
+</html>

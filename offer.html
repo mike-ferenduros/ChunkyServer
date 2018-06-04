@@ -1,13 +1,27 @@
 <!DOCTYPE html>
-  <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>OFFER</title>
-    </head>
-    <body>
-      <h1>Hello World!</h1>
-      We are using node <script>document.write(process.versions.node)</script>,
-      Chrome <script>document.write(process.versions.chrome)</script>,
-      and Electron <script>document.write(process.versions.electron)</script>.
-    </body>
-  </html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>OFFER</title>
+		<script>
+			const {ipcRenderer, remote} = require('electron')
+			window.$ = window.jQuery = require('jquery')
+		</script>
+	</head>
+	<body>
+		<div id='addresses'></div>
+		<div id='key'></div>
+		<script>
+			function update() {
+				addresses = remote.getGlobal('addresses')
+				key = remote.getGlobal('offerKey')
+				$('div#addresses').text(addresses.join(', '))
+				$('div#key').text(key)
+			}
+
+			ipcRenderer.on('server-changed', update)
+			update()
+
+		</script>
+	</body>
+</html>

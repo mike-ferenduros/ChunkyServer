@@ -1,4 +1,4 @@
-const {app, BrowserWindow, ipcMain, ipcRenderer} = require('electron')
+const {app, BrowserWindow, ipcMain} = require('electron')
 os = require('os')
 fs = require('fs')
 util = require('util')
@@ -34,7 +34,7 @@ function appReady() {
 	mainWindow = new BrowserWindow({width: 800, height: 600})
 	mainWindow.loadFile('index.html')
 
-	//mainWindow.webContents.openDevTools()
+	mainWindow.webContents.openDevTools()
 
 	mainWindow.on('closed', () => mainWindow = null)
 }
@@ -44,6 +44,10 @@ app.on('window-all-closed', () => app.quit())
 app.on('ready', appReady)
 
 
+
+function sendUpdateServer(dest) {
+	dest.send('update-server', {'status': 'whatevs'})
+}
 
 
 
@@ -64,12 +68,15 @@ function checkPath(path, client) {
 
 
 
-let lastSentAddresses = JSON.stringify([])
-function updateServerAddresses() {
-	addresses = JSON.stringify(server ? server.addresses() : [])
-	if (addresses != lastSentAddresses) {
-		lastSentAddresses = addresses
-		console.log('Local addresses changed to '+lastSentAddresses)
+let lastSentAddresses = null
+
+function updateServerAddresses(addresses) {
+	global.serverAddresses = addresses
+
+	astring = JSON.stringify(addresses)
+	if (astring != lastSentAddresses) {
+		lastSentAddresses = astring
+		console.log('Local addresses changed to '+addresses)
 	}
 }
 
@@ -98,37 +105,47 @@ function handleFile(req,res) {
 
 
 
-
 let offerWindow = null
-let offerKey = null
 
-ipcMain.on('offer', (event) => {
+function offer() {
 	if (offerWindow) {
+		offerWindow.focus()
 		return
 	}
+	if (!server) {
+		return
+	}
+	global.offerKey = uuidv4()
 
-	offerKey = uuidv4()
-	offerBody = {'key':offerKey, 'addr': serverAddresses() }
 	offerWindow = new BrowserWindow({width: 800, height: 600})
-	offerWindow.loadFile('offer.html?body='+offerBody.stringify)
+	offerWindow.loadFile('offer.html')
 
 	offerWindow.on('closed', () => {
 		offerWindow = null
-		offerKey = null
+		global.offerKey = null
 	})
-})
+}
+
+function cancelOffer() {
+	if (offerWindow) {
+		offerWindow.close()
+		offerWindow = null
+	}
+	global.offerKey = null
+}
+
+
+ipcMain.on('offer', offer)
 
 
 
 function handleClaim(req,res) {
-	if (offerKey && req.headers.authorization == offerKey && req.query.name) {
-
-		offerWindow.close()
-		offerWindow = null
-		offerKey = null
+	if (global.offerKey && req.headers.authorization == global.offerKey && req.query.name) {
 
 		newClient = {key: offeredKey, name: req.query.name}
-		offeredKey = null
+
+		cancelOffer()
+
 		global.config.clients.push(newClient)
 		saveConfig()
 
@@ -142,15 +159,26 @@ function handleClaim(req,res) {
 
 
 
-
-
 function serverStateChanged() {
-	if (mainWindow) {
-		mainWindow.send('server-state-change')
+	addresses = server ? server.addresses() : []
+	addresses.sort()
+	updateServerAddresses(addresses)
+
+	global.serverState = {
+		running: server != null,
+		status: server ? 'running' : 'stopped',
+		natStatus: addresses.join(', ')
 	}
 
-	updateServerAddresses()
+	if (mainWindow) {
+		mainWindow.send('update-server')
+	}
+	if (offerWindow) {
+		offerWindow.send('update-server')
+	}
 }
+
+
 
 function startServer() {
 
@@ -158,7 +186,7 @@ function startServer() {
 		return
 	}
 
-	server = require('./server')()
+	server = require('./server')(12345)
 
 	server.server.get('/list', handleList)
 	server.server.get('/file', handleFile)
@@ -177,6 +205,8 @@ function stopServer() {
 
 		serverStateChanged()
 	}
+
+	cancelOffer()
 }
 
 startServer()
