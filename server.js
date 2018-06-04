@@ -13,7 +13,6 @@ module.exports = function(port, ttl) {
 }
 
 
-
 function Server(port, ttl) {
 	EventEmitter.call(this)
 
@@ -115,6 +114,22 @@ Server.prototype.setPublicIP = function(ip) {
 	}
 }
 
+Server.prototype.createMapping = function(publicPort, retries, cb) {
+	console.log('Creating mapping')
+	this.upnp.portMapping({public: publicPort, private: this.privatePort, ttl: this.ttl}, (err) => {
+		if (err) {
+			if (retries == 0) {
+				cb(err)
+			} else {
+				console.log('Failed to map port '+publicPort+', trying another')
+				this.createMapping(publicPort+1, retries-1, cb)
+			}
+		} else {
+			cb(null)
+		}
+	})
+}
+
 Server.prototype.refreshMapping = function() {
 	if (!this.running) {
 		return
@@ -126,8 +141,7 @@ Server.prototype.refreshMapping = function() {
 			console.log('Existing mapping valid for another '+mapping.ttl+'s')
 			this.setMappingTimeoutingAfter(mapping.ttl+1)
 		} else {
-			console.log('Creating mapping')
-			this.upnp.portMapping({public: this.privatePort, private: this.privatePort, ttl: this.ttl}, (err) => {
+			this.createMapping(this.privatePort, 8, (err) => {
 				console.log('Checking new mapping')
 				this.getMapping((err,mapping) => {
 					if (mapping) {

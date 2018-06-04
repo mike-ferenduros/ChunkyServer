@@ -168,3 +168,7 @@ function serverStateChanged() {
 }
 
 startServer()
+
+
+ipcMain.on('start-server', () => startServer())
+ipcMain.on('stop-server', () => stopServer())
