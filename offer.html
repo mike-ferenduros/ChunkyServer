@@ -6,17 +6,25 @@
 		<script>
 			const {ipcRenderer, remote} = require('electron')
 			window.$ = window.jQuery = require('jquery')
+			qrcode = require('qrcode')
 		</script>
 	</head>
 	<body>
 		<div id='addresses'></div>
 		<div id='key'></div>
+		<img id='qrcode'>
 		<script>
 			function update() {
+				serverid = remote.getGlobal('config').serverid
 				addresses = remote.getGlobal('addresses')
 				key = remote.getGlobal('offerKey')
 				$('div#addresses').text(addresses.join(', '))
 				$('div#key').text(key)
+
+				qrbody = ['chunky',serverid,key].concat(addresses).join('/').toUpperCase()
+				qrcode.toDataURL(qrbody, {errorCorrectionLevel: 'L', }, (err,url) => {
+					$('img#qrcode').attr('src', url)
+				})
 			}
 
 			ipcRenderer.on('server-changed', update)

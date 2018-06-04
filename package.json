@@ -15,6 +15,7 @@
   "dependencies": {
     "express": "^4.16.3",
     "jquery": "^3.3.1",
-    "nat-upnp": "^1.1.1"
+    "nat-upnp": "^1.1.1",
+    "qrcode": "^1.2.0"
   }
 }
