@@ -1,8 +1,9 @@
-const {app, BrowserWindow, ipcMain} = require('electron')
+const {app, BrowserWindow, ipcMain, dialog} = require('electron')
 os = require('os')
 fs = require('fs')
 util = require('util')
 uuidv4 = require('uuid/v4')
+opds = require('./opds')
 
 
 let server = null
@@ -82,9 +83,34 @@ function updateServerAddresses(addresses) {
 
 
 
-function handleList(req,res) {
+
+
+
+function handleFolders(req,res) {
 	if (client = requestClient(req)) {
-		res.status(200).send('You are '+client.name+' and you want to list '+req.query.path)
+		if (req.query.path == null) {
+			roots = []
+			for (folder of global.config.folders) {
+				roots.push(folder.path)
+			}
+			res.status(200).send(navigationFeed(null, roots))
+		} else if (path = checkPath(req.query.path)) {
+			fs.readdir(path, (files) => res.status(200).send(opds.navigationFeed(path, files)))
+		} else {
+			res.status(403).send('Unauthorised')
+		}
+	} else {
+		res.status(401).send('Unauthorised')
+	}
+}
+
+function handleFiles(req,res) {
+	if (client = requestClient(req)) {
+		if (path = checkPath(req.query.path)) {
+			fs.readdir(path, (files) => res.status(200).send(opds.acquisitionFeed(path, files)))
+		} else {
+			res.status(403).send('Unauthorised')
+		}
 	} else {
 		res.status(401).send('Unauthorised')
 	}
@@ -92,8 +118,7 @@ function handleList(req,res) {
 
 function handleFile(req,res) {
 	if (client = requestClient(req)) {
-		reqPath = req.query.path
-		if (path = checkPath(reqPath,client)) {
+		if (path = checkPath(req.query.path,client)) {
 			res.status(200).sendFile(path)
 		} else {
 			res.status(403).send('Unauthorised')
@@ -135,7 +160,29 @@ function cancelOffer() {
 }
 
 
+
+function addFolder() {
+	dialog.showOpenDialog(mainWindow, {
+		title: 'Add folder',
+		buttonLabel: 'Add',
+		properties: ['openDirectory']
+	}, (paths) => {
+		if (paths && (paths.length == 1)) {
+			//FIXME: Check for overlap with existing folders
+			path = paths[0]
+			name = path.split('/').slice(-1)[0]
+			global.config.folders.push({path: path, name: name})
+			saveConfig()
+			foldersChanged()
+		}
+	})
+
+}
+
+
+
 ipcMain.on('offer', offer)
+ipcMain.on('add-folder', addFolder)
 
 
 
@@ -154,7 +201,7 @@ function handleClaim(req,res) {
 
 		clientsChanged()
 
-		res.status(200).send('ok')
+		res.status(200).send({name: os.hostname()})
 	} else {
 		res.status(401).send('Unauthorised')
 	}
@@ -189,6 +236,12 @@ function clientsChanged() {
 	}
 }
 
+function foldersChanged() {
+	if (mainWindow) {
+		mainWindow.send('update-folders')
+	}
+}
+
 
 function startServer() {
 
@@ -198,8 +251,10 @@ function startServer() {
 
 	server = require('./server')(12345)
 
-	server.server.get('/list', handleList)
+	server.server.get('/folders', handleFolders)
+	server.server.get('/files', handleFiles)
 	server.server.get('/file', handleFile)
+
 	server.server.post('/claim', handleClaim)
 
 	server.on('public-address-changed', serverStateChanged)

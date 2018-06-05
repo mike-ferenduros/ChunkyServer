@@ -11,10 +11,15 @@
 	<body>
 		<h1>Hello World!</h1>
 
+		<h3>Folders</h3>
 		<ul id='folders'></ul>
+		<button id='addFolder'>Add folder</button>
 
+		<h3>Clients</h3>
 		<ul id='clients'></ul>
+		<button id='offer'>Add client</button>
 
+		<h3>Server</h3>
 		<div id='server'>
 			<span class='status'></span>
 			<span class='nat'></span>
@@ -22,7 +27,7 @@
 			<button class='start'>Start</button>
 		</div>
 
-		<button id='offer'>Add client</button>
+
 
 		<script>
 			function updateFolders() {
@@ -52,6 +57,7 @@
 			$('div#server button.stop').click(() => ipcRenderer.send('stop-server'))
 			$('div#server button.start').click(() => ipcRenderer.send('start-server'))
 			$('button#offer').click(() => ipcRenderer.send('offer'))
+			$('button#addFolder').click(() => ipcRenderer.send('add-folder'))
 
 
 
