@@ -53,7 +53,7 @@ module.exports = {
 		xml.writeAttribute('href',opdsFoldersURL(folder))
 		xml.writeAttribute('rel','self')
 		xml.writeAttribute('type','application/atom+xml;profile=opds-catalog;kind=navigation')
-		xml.endElement
+		xml.endElement()
 
 		xml.writeElement('title', "ChunkyServer")
 		xml.writeElement('updated', now)
@@ -73,10 +73,10 @@ module.exports = {
 				xml.writeElement('updated', now)
 
 				xml.startElement('link')
-				xml.writeAttribute('href',opdsFilesURL(subfolder))
+				xml.writeAttribute('href',opdsFoldersURL(subfolder))
 				xml.writeAttribute('rel','subsection')
 				xml.writeAttribute('type','application/atom+xml;profile=opds-catalog;kind=navigation')
-				xml.endElement
+				xml.endElement()
 
 				xml.endElement()		//entry
 			}
@@ -89,10 +89,10 @@ module.exports = {
 			xml.writeElement('updated', now)
 
 			xml.startElement('link')
-			xml.writeAttribute('href',opdsFoldersURL(folder))
+			xml.writeAttribute('href',opdsFilesURL(folder))
 			xml.writeAttribute('rel','subsection')
 			xml.writeAttribute('type','application/atom+xml;profile=opds-catalog;kind=acquisition')
-			xml.endElement
+			xml.endElement()
 
 			xml.endElement()		//entry
 		}
@@ -146,7 +146,7 @@ module.exports = {
 				xml.writeAttribute('href',opdsDownloadURL(file))
 				xml.writeAttribute('rel','http://opds-spec.org/acquisition')
 				xml.writeAttribute('type','application/epub+zip')
-				xml.endElement
+				xml.endElement()
 
 				xml.endElement()		//entry
 			}

@@ -89,14 +89,9 @@ function updateServerAddresses(addresses) {
 function handleFolders(req,res) {
 	if (client = requestClient(req)) {
 		if (req.query.path == null) {
-			roots = []
-			for (folder of global.config.folders) {
-				roots.push(folder.path)
-			}
-			console.log(opds)
+			roots = global.config.folders.map((folder) => folder.path)
 			res.status(200).send(opds.navigationFeed(null, roots))
 		} else if (path = checkPath(req.query.path)) {
-			console.log(opds)
 			fs.readdir(path, (err,files) => res.status(200).send(opds.navigationFeed(path, files)))
 		} else {
 			res.status(403).send('Unauthorised')
