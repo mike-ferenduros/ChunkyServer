@@ -93,9 +93,11 @@ function handleFolders(req,res) {
 			for (folder of global.config.folders) {
 				roots.push(folder.path)
 			}
-			res.status(200).send(navigationFeed(null, roots))
+			console.log(opds)
+			res.status(200).send(opds.navigationFeed(null, roots))
 		} else if (path = checkPath(req.query.path)) {
-			fs.readdir(path, (files) => res.status(200).send(opds.navigationFeed(path, files)))
+			console.log(opds)
+			fs.readdir(path, (err,files) => res.status(200).send(opds.navigationFeed(path, files)))
 		} else {
 			res.status(403).send('Unauthorised')
 		}
@@ -107,7 +109,7 @@ function handleFolders(req,res) {
 function handleFiles(req,res) {
 	if (client = requestClient(req)) {
 		if (path = checkPath(req.query.path)) {
-			fs.readdir(path, (files) => res.status(200).send(opds.acquisitionFeed(path, files)))
+			fs.readdir(path, (err,files) => res.status(200).send(opds.acquisitionFeed(path, files)))
 		} else {
 			res.status(403).send('Unauthorised')
 		}

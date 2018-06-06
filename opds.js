@@ -36,125 +36,125 @@ module.exports = {
 
 		now = (new Date).toISOString()
 
-		opds = new XMLWriter
-		opds.startDocument()
-		opds.startElement('feed').writeAttribute('xmlns', 'http://www.w3.org/2005/Atom')
+		xml = new XMLWriter
+		xml.startDocument()
+		xml.startElement('feed').writeAttribute('xmlns', 'http://www.w3.org/2005/Atom')
 
 		console.log(opdsID('nav'))
-		opds.writeElement('id', opdsID('nav',folder))
+		xml.writeElement('id', opdsID('nav',folder))
 
-		opds.startElement('link')
-		opds.writeAttribute('href',opdsFoldersURL(null))
-		opds.writeAttribute('rel','start')
-		opds.writeAttribute('type','application/atom+xml;profile=opds-catalog;kind=navigation')
-		opds.endElement()
+		xml.startElement('link')
+		xml.writeAttribute('href',opdsFoldersURL(null))
+		xml.writeAttribute('rel','start')
+		xml.writeAttribute('type','application/atom+xml;profile=opds-catalog;kind=navigation')
+		xml.endElement()
 
-		opds.startElement('link')
-		opds.writeAttribute('href',opdsFoldersURL(folder))
-		opds.writeAttribute('rel','self')
-		opds.writeAttribute('type','application/atom+xml;profile=opds-catalog;kind=navigation')
-		opds.endElement
+		xml.startElement('link')
+		xml.writeAttribute('href',opdsFoldersURL(folder))
+		xml.writeAttribute('rel','self')
+		xml.writeAttribute('type','application/atom+xml;profile=opds-catalog;kind=navigation')
+		xml.endElement
 
-		opds.writeElement('title', "ChunkyServer")
-		opds.writeElement('updated', now)
+		xml.writeElement('title', "ChunkyServer")
+		xml.writeElement('updated', now)
 
-		opds.startElement('author')
-		opds.writeElement('name','ChunkyServer')
-		opds.endElement()
+		xml.startElement('author')
+		xml.writeElement('name','ChunkyServer')
+		xml.endElement()
 
-		for (subfolder of subfolders) {
+		for (name of subfolders) {
+			subfolder = [folder,name].join('/')
 			stat = fs.statSync(subfolder)
 			if (stat && stat.isDirectory()) {
-				name = subfolder.split('/').slice(-1)[0]
-				opds.startElement('entry')
+				xml.startElement('entry')
 
-				opds.writeElement('id', opdsID('nav',subfolder))
-				opds.writeElement('title', name)
-				opds.writeElement('updated', now)
+				xml.writeElement('id', opdsID('nav',subfolder))
+				xml.writeElement('title', name)
+				xml.writeElement('updated', now)
 
-				opds.startElement('link')
-				opds.writeAttribute('href',opdsFoldersURL(subfolder))
-				opds.writeAttribute('rel','subsection')
-				opds.writeAttribute('type','application/atom+xml;profile=opds-catalog;kind=navigation')
-				opds.endElement
+				xml.startElement('link')
+				xml.writeAttribute('href',opdsFilesURL(subfolder))
+				xml.writeAttribute('rel','subsection')
+				xml.writeAttribute('type','application/atom+xml;profile=opds-catalog;kind=navigation')
+				xml.endElement
 
-				opds.endElement()		//entry
+				xml.endElement()		//entry
 			}
 		}
 
 		if (folder != null) {
-			opds.startElement('entry')
-			opds.writeElement('id', opdsID('acq',folder))
-			opds.writeElement('title', 'Comics')
-			opds.writeElement('updated', now)
+			xml.startElement('entry')
+			xml.writeElement('id', opdsID('acq',folder))
+			xml.writeElement('title', 'Comics')
+			xml.writeElement('updated', now)
 
-			opds.startElement('link')
-			opds.writeAttribute('href',opdsFoldersURL(folder))
-			opds.writeAttribute('rel','subsection')
-			opds.writeAttribute('type','application/atom+xml;profile=opds-catalog;kind=acquisition')
-			opds.endElement
+			xml.startElement('link')
+			xml.writeAttribute('href',opdsFoldersURL(folder))
+			xml.writeAttribute('rel','subsection')
+			xml.writeAttribute('type','application/atom+xml;profile=opds-catalog;kind=acquisition')
+			xml.endElement
 
-			opds.endElement()		//entry
+			xml.endElement()		//entry
 		}
 
-		opds.endElement()		//feed
-		opds.endDocument()
+		xml.endElement()		//feed
+		xml.endDocument()
 
-		return opds.toString()
+		return xml.toString()
 	},
 
 	acquisitionFeed: function(folder, files) {
 
 		now = (new Date).toISOString()
 
-		opds = new XMLWriter
-		opds.startDocument()
-		opds.startElement('feed').writeAttribute('xmlns', 'http://www.w3.org/2005/Atom')
+		xml = new XMLWriter
+		xml.startDocument()
+		xml.startElement('feed').writeAttribute('xmlns', 'http://www.w3.org/2005/Atom')
 
-		opds.writeElement('id', opdsID('acq',folder))
+		xml.writeElement('id', opdsID('acq',folder))
 
-		opds.startElement('link')
-		opds.writeAttribute('href',opdsFoldersURL(null))
-		opds.writeAttribute('rel','start')
-		opds.writeAttribute('type','application/atom+xml;profile=opds-catalog;kind=navigation')
-		opds.endElement()
+		xml.startElement('link')
+		xml.writeAttribute('href',opdsFoldersURL(null))
+		xml.writeAttribute('rel','start')
+		xml.writeAttribute('type','application/atom+xml;profile=opds-catalog;kind=navigation')
+		xml.endElement()
 
-		opds.startElement('link')
-		opds.writeAttribute('href',opdsFilesURL(folder))
-		opds.writeAttribute('rel','self')
-		opds.writeAttribute('type','application/atom+xml;profile=opds-catalog;kind=acquisition')
-		opds.endElement()
+		xml.startElement('link')
+		xml.writeAttribute('href',opdsFilesURL(folder))
+		xml.writeAttribute('rel','self')
+		xml.writeAttribute('type','application/atom+xml;profile=opds-catalog;kind=acquisition')
+		xml.endElement()
 
-		opds.writeElement('title', "ChunkyServer")
-		opds.writeElement('updated', now)
+		xml.writeElement('title', "ChunkyServer")
+		xml.writeElement('updated', now)
 
-		opds.startElement('author')
-		opds.writeElement('name','ChunkyServer')
-		opds.endElement()
+		xml.startElement('author')
+		xml.writeElement('name','ChunkyServer')
+		xml.endElement()
 
-		for (file of files) {
-			stat = fs.statSync(subfolder)
+		for (name of files) {
+			file = [folder,name].join('/')
+			stat = fs.statSync(file)
 			if (stat && stat.isFile()) {
-				name = file.split('/').slice(-1)[0]
-				opds.startElement('entry')
+				xml.startElement('entry')
 
-				opds.writeElement('id', opdsID('acq',subfolder))
-				opds.writeElement('title', name)
-				opds.writeElement('updated', now)
+				xml.writeElement('id', opdsID('file',file))
+				xml.writeElement('title', name)
+				xml.writeElement('updated', now)
 
-				opds.startElement('link')
-				opds.writeAttribute('href',opdsDownloadURL(file))
-				opds.writeAttribute('rel','http://opds-spec.org/acquisition')
-				opds.writeAttribute('type','application/epub+zip')
-				opds.endElement
+				xml.startElement('link')
+				xml.writeAttribute('href',opdsDownloadURL(file))
+				xml.writeAttribute('rel','http://opds-spec.org/acquisition')
+				xml.writeAttribute('type','application/epub+zip')
+				xml.endElement
 
-				opds.endElement()		//entry
+				xml.endElement()		//entry
 			}
 		}
 
-		opds.endElement()		//feed
-		opds.endDocument()
+		xml.endElement()		//feed
+		xml.endDocument()
 
-		return opds.toString()
+		return xml.toString()
 	}
 }
