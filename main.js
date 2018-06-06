@@ -1,16 +1,16 @@
 const {app, BrowserWindow, ipcMain, dialog} = require('electron')
-let os = require('os')
-let fs = require('fs')
-let util = require('util')
-let uuidv4 = require('uuid/v4')
-let opds = require('./opds')
-let basename = require('path').basename
+const os = require('os')
+const fs = require('fs')
+const util = require('util')
+const uuidv4 = require('uuid/v4')
+const opds = require('./opds')
+const basename = require('path').basename
 
 
 let server = null
 
 
-let configPath = app.getPath('userData') + '/config.json'
+const configPath = app.getPath('userData') + '/config.json'
 
 function saveConfig() {
 	fs.writeFileSync(configPath, JSON.stringify(global.config))
@@ -71,7 +71,7 @@ function checkPath(path, client) {
 		if (checked) {
 			for (let folder of global.config.folders) {
 				if ((checked+'/').startsWith(folder.path+'/')) {
-					return path
+					return checked
 				}
 			}
 		}
@@ -100,11 +100,12 @@ function updateServerAddresses(addresses) {
 function handleFolders(req,res) {
 	let client = requestClient(req)
 	if (client) {
-		if (req.query.path == null) {
+		let path = checkPath(req.query.path)
+		if (path) {
+			fs.readdir(path, (err,files) => res.status(200).send(opds.navigationFeed(path, files)))
+		} else if (req.query.path == null) {
 			let roots = global.config.folders.map((folder) => folder.path)
 			res.status(200).send(opds.navigationFeed(null, roots))
-		} else if (path = checkPath(req.query.path)) {
-			fs.readdir(path, (err,files) => res.status(200).send(opds.navigationFeed(path, files)))
 		} else {
 			res.status(403).send('Unauthorised')
 		}

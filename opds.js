@@ -1,9 +1,9 @@
-let sha1 = require('sha1')
-let fs = require('fs')
-let XMLWriter = require('xml-writer')
-let extname = require('path').extname
-let joinpath = require('path').join
-let basename = require('path').basename
+const sha1 = require('sha1')
+const fs = require('fs')
+const XMLWriter = require('xml-writer')
+const extname = require('path').extname
+const joinpath = require('path').join
+const basename = require('path').basename
 
 
 
@@ -48,13 +48,12 @@ module.exports = {
 	navigationFeed: function(folder, subfolders) {
 		//folder is null for root folder
 
-		let now = (new Date).toISOString()
+		const now = (new Date).toISOString()
 
-		let xml = new XMLWriter
+		const xml = new XMLWriter
 		xml.startDocument()
 		xml.startElement('feed').writeAttribute('xmlns', 'http://www.w3.org/2005/Atom')
 
-		console.log(opdsID('nav'))
 		xml.writeElement('id', opdsID('nav',folder))
 
 		xml.startElement('link')
@@ -81,15 +80,9 @@ module.exports = {
 		xml.writeElement('name','ChunkyServer')
 		xml.endElement()
 
-		for (let name of subfolders) {
+		for (let subfolderName of subfolders) {
 
-			let subfolder
-			if (folder) {
-				subfolder = joinpath(folder,name)
-			} else {
-				subfolder = name
-				name = basename(subfolder)
-			}
+			let subfolder = (folder == null) ? subfolderName : joinpath(folder,subfolderName)
 
 			try {
 				let stat = fs.statSync(subfolder)
@@ -97,7 +90,7 @@ module.exports = {
 					xml.startElement('entry')
 
 					xml.writeElement('id', opdsID('nav',subfolder))
-					xml.writeElement('title', name)
+					xml.writeElement('title', basename(subfolder))
 					xml.writeElement('updated', now)
 
 					xml.startElement('link')
@@ -136,9 +129,9 @@ module.exports = {
 
 	acquisitionFeed: function(folder, files) {
 
-		let now = (new Date).toISOString()
+		const now = (new Date).toISOString()
 
-		let xml = new XMLWriter
+		const xml = new XMLWriter
 		xml.startDocument()
 		xml.startElement('feed').writeAttribute('xmlns', 'http://www.w3.org/2005/Atom')
 
@@ -164,11 +157,11 @@ module.exports = {
 		xml.endElement()
 
 		for (let name of files) {
-			let mimetype = mimetypes[extname(name)]
+			const mimetype = mimetypes[extname(name)]
 			if (mimetype) {
 				let file = joinpath(folder,name)
 				try {
-					let stat = fs.statSync(file)
+					const stat = fs.statSync(file)
 					if (stat && stat.isFile()) {
 						xml.startElement('entry')
 
