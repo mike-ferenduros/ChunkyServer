@@ -1,15 +1,16 @@
 const {app, BrowserWindow, ipcMain, dialog} = require('electron')
-os = require('os')
-fs = require('fs')
-util = require('util')
-uuidv4 = require('uuid/v4')
-opds = require('./opds')
+let os = require('os')
+let fs = require('fs')
+let util = require('util')
+let uuidv4 = require('uuid/v4')
+let opds = require('./opds')
+let basename = require('path').basename
 
 
 let server = null
 
 
-configPath = app.getPath('userData') + '/config.json'
+let configPath = app.getPath('userData') + '/config.json'
 
 function saveConfig() {
 	fs.writeFileSync(configPath, JSON.stringify(global.config))
@@ -52,19 +53,30 @@ function sendUpdateServer(dest) {
 
 
 
-
 function requestClient(req) {
-	key = req.headers.authorization
-	for (var client of global.config.clients) {
-		if (client.key == key) {
-			return client
+	let key = req.headers.authorization
+	if (key) {
+		for (let client of global.config.clients) {
+			if (client.key == key) {
+				return client
+			}
 		}
 	}
 	return null
 }
 
 function checkPath(path, client) {
-	return path
+	if (path) {
+		let checked = fs.realpathSync(path)
+		if (checked) {
+			for (let folder of global.config.folders) {
+				if ((checked+'/').startsWith(folder.path+'/')) {
+					return path
+				}
+			}
+		}
+	}
+	return null
 }
 
 
@@ -74,7 +86,7 @@ let lastSentAddresses = null
 function updateServerAddresses(addresses) {
 	global.serverAddresses = addresses
 
-	astring = JSON.stringify(addresses)
+	let astring = JSON.stringify(addresses)
 	if (astring != lastSentAddresses) {
 		lastSentAddresses = astring
 		console.log('Local addresses changed to '+addresses)
@@ -85,11 +97,11 @@ function updateServerAddresses(addresses) {
 
 
 
-
 function handleFolders(req,res) {
-	if (client = requestClient(req)) {
+	let client = requestClient(req)
+	if (client) {
 		if (req.query.path == null) {
-			roots = global.config.folders.map((folder) => folder.path)
+			let roots = global.config.folders.map((folder) => folder.path)
 			res.status(200).send(opds.navigationFeed(null, roots))
 		} else if (path = checkPath(req.query.path)) {
 			fs.readdir(path, (err,files) => res.status(200).send(opds.navigationFeed(path, files)))
@@ -102,8 +114,10 @@ function handleFolders(req,res) {
 }
 
 function handleFiles(req,res) {
-	if (client = requestClient(req)) {
-		if (path = checkPath(req.query.path)) {
+	let client = requestClient(req)
+	if (client) {
+		let path = checkPath(req.query.path)
+		if (path) {
 			fs.readdir(path, (err,files) => res.status(200).send(opds.acquisitionFeed(path, files)))
 		} else {
 			res.status(403).send('Unauthorised')
@@ -114,8 +128,10 @@ function handleFiles(req,res) {
 }
 
 function handleFile(req,res) {
-	if (client = requestClient(req)) {
-		if (path = checkPath(req.query.path,client)) {
+	let client = requestClient(req)
+	if (client) {
+		let path = checkPath(req.query.path,client)
+		if (path) {
 			res.status(200).sendFile(path)
 		} else {
 			res.status(403).send('Unauthorised')
@@ -166,14 +182,14 @@ function addFolder() {
 	}, (paths) => {
 		if (paths && (paths.length == 1)) {
 			//FIXME: Check for overlap with existing folders
-			path = paths[0]
-			name = path.split('/').slice(-1)[0]
-			global.config.folders.push({path: path, name: name})
-			saveConfig()
-			foldersChanged()
+			let path = fs.realpathSync(paths[0])
+			if (path) {
+				global.config.folders.push({path: path, name: basename(path)})
+				saveConfig()
+				foldersChanged()
+			}
 		}
 	})
-
 }
 
 
@@ -184,12 +200,10 @@ ipcMain.on('add-folder', addFolder)
 
 
 function handleClaim(req,res) {
-	console.log(req.headers)
-	console.log(req.body)
 
 	if (global.offerKey && req.headers.authorization == global.offerKey && req.body.name && req.body.id) {
 
-		newClient = {key: global.offerKey, name: req.body.name, id: req.body.id}
+		let newClient = {key: global.offerKey, name: req.body.name, id: req.body.id}
 
 		cancelOffer()
 
@@ -209,7 +223,7 @@ function handleClaim(req,res) {
 
 
 function serverStateChanged() {
-	addresses = server ? server.addresses() : []
+	let addresses = server ? server.addresses() : []
 	addresses.sort()
 	updateServerAddresses(addresses)
 

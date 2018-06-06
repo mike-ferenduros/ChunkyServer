@@ -1,5 +1,9 @@
-sha1 = require('sha1')
-XMLWriter = require('xml-writer')
+let sha1 = require('sha1')
+let fs = require('fs')
+let XMLWriter = require('xml-writer')
+let extname = require('path').extname
+let joinpath = require('path').join
+let basename = require('path').basename
 
 
 
@@ -21,22 +25,32 @@ function opdsDownloadURL(path) {
 
 function opdsID(kind,path) {
 	if (path == null) {
-		return ['urn','com.chunky-reader',global.config.serverid,'root'].join(':')
+		return ['urn','chunkyserver',global.config.serverid,'root'].join(':')
 	} else {
-		return ['urn','com.chunky-reader',global.config.serverid,kind,sha1(path)].join(':')
+		return ['urn','chunkyserver',global.config.serverid,kind,sha1(path)].join(':')
 	}
 }
 
 
+
+let mimetypes = {
+	'.zip': 'application/vnd.comicbook+zip',
+	'.cbz': 'application/vnd.comicbook+zip',
+	'.cbr': 'application/vnd.comicbook-rar',
+	'.rar': 'application/vnd.comicbook-rar',
+	'.cb7': 'application/x-7z-compressed',
+	'.cbt': 'application/tar',
+	'.pdf': 'application/pdf'
+}
 
 module.exports = {
 
 	navigationFeed: function(folder, subfolders) {
 		//folder is null for root folder
 
-		now = (new Date).toISOString()
+		let now = (new Date).toISOString()
 
-		xml = new XMLWriter
+		let xml = new XMLWriter
 		xml.startDocument()
 		xml.startElement('feed').writeAttribute('xmlns', 'http://www.w3.org/2005/Atom')
 
@@ -55,30 +69,47 @@ module.exports = {
 		xml.writeAttribute('type','application/atom+xml;profile=opds-catalog;kind=navigation')
 		xml.endElement()
 
-		xml.writeElement('title', "ChunkyServer")
+		if (folder) {
+			xml.writeElement('title', basename(folder))
+		} else {
+			xml.writeElement('title', 'ChunkyServer')
+		}
+
 		xml.writeElement('updated', now)
 
 		xml.startElement('author')
 		xml.writeElement('name','ChunkyServer')
 		xml.endElement()
 
-		for (name of subfolders) {
-			subfolder = [folder,name].join('/')
-			stat = fs.statSync(subfolder)
-			if (stat && stat.isDirectory()) {
-				xml.startElement('entry')
+		for (let name of subfolders) {
 
-				xml.writeElement('id', opdsID('nav',subfolder))
-				xml.writeElement('title', name)
-				xml.writeElement('updated', now)
+			let subfolder
+			if (folder) {
+				subfolder = joinpath(folder,name)
+			} else {
+				subfolder = name
+				name = basename(subfolder)
+			}
 
-				xml.startElement('link')
-				xml.writeAttribute('href',opdsFoldersURL(subfolder))
-				xml.writeAttribute('rel','subsection')
-				xml.writeAttribute('type','application/atom+xml;profile=opds-catalog;kind=navigation')
-				xml.endElement()
+			try {
+				let stat = fs.statSync(subfolder)
+				if (stat && stat.isDirectory()) {
+					xml.startElement('entry')
 
-				xml.endElement()		//entry
+					xml.writeElement('id', opdsID('nav',subfolder))
+					xml.writeElement('title', name)
+					xml.writeElement('updated', now)
+
+					xml.startElement('link')
+					xml.writeAttribute('href',opdsFoldersURL(subfolder))
+					xml.writeAttribute('rel','subsection')
+					xml.writeAttribute('type','application/atom+xml;profile=opds-catalog;kind=navigation')
+					xml.endElement()
+
+					xml.endElement()		//entry
+				}
+			} catch (e) {
+				console.log('Failed to stat '+subfolder+': '+e)
 			}
 		}
 
@@ -105,9 +136,9 @@ module.exports = {
 
 	acquisitionFeed: function(folder, files) {
 
-		now = (new Date).toISOString()
+		let now = (new Date).toISOString()
 
-		xml = new XMLWriter
+		let xml = new XMLWriter
 		xml.startDocument()
 		xml.startElement('feed').writeAttribute('xmlns', 'http://www.w3.org/2005/Atom')
 
@@ -125,30 +156,37 @@ module.exports = {
 		xml.writeAttribute('type','application/atom+xml;profile=opds-catalog;kind=acquisition')
 		xml.endElement()
 
-		xml.writeElement('title', "ChunkyServer")
+		xml.writeElement('title', basename(folder))
 		xml.writeElement('updated', now)
 
 		xml.startElement('author')
 		xml.writeElement('name','ChunkyServer')
 		xml.endElement()
 
-		for (name of files) {
-			file = [folder,name].join('/')
-			stat = fs.statSync(file)
-			if (stat && stat.isFile()) {
-				xml.startElement('entry')
+		for (let name of files) {
+			let mimetype = mimetypes[extname(name)]
+			if (mimetype) {
+				let file = joinpath(folder,name)
+				try {
+					let stat = fs.statSync(file)
+					if (stat && stat.isFile()) {
+						xml.startElement('entry')
 
-				xml.writeElement('id', opdsID('file',file))
-				xml.writeElement('title', name)
-				xml.writeElement('updated', now)
+						xml.writeElement('id', opdsID('file',file))
+						xml.writeElement('title', name)
+						xml.writeElement('updated', now)
 
-				xml.startElement('link')
-				xml.writeAttribute('href',opdsDownloadURL(file))
-				xml.writeAttribute('rel','http://opds-spec.org/acquisition')
-				xml.writeAttribute('type','application/epub+zip')
-				xml.endElement()
+						xml.startElement('link')
+						xml.writeAttribute('href',opdsDownloadURL(file))
+						xml.writeAttribute('rel','http://opds-spec.org/acquisition')
+						xml.writeAttribute('type', mimetype)
+						xml.endElement()
 
-				xml.endElement()		//entry
+						xml.endElement()		//entry
+					}
+				} catch (e) {
+					console.log('Failed to stat '+file+': '+e)
+				}
 			}
 		}
 

@@ -1,12 +1,12 @@
-os = require('os')
-fs = require('fs')
-util = require('util')
-uuidv4 = require('uuid/v4')
-express = require('express')
-bodyParser = require('body-parser')
-upnp = require('nat-upnp')
+let os = require('os')
+let fs = require('fs')
+let util = require('util')
+let uuidv4 = require('uuid/v4')
+let express = require('express')
+let bodyParser = require('body-parser')
+let upnp = require('nat-upnp')
 
-EventEmitter = require('events')
+let EventEmitter = require('events')
 util.inherits(Server, EventEmitter)
 
 module.exports = function(port, ttl) {
@@ -79,7 +79,7 @@ Server.prototype.refreshPublicIP = function(cb) {
 Server.prototype.getMapping = function(cb) {
 	this.upnp.getMappings((err, mappings) => {
 		if (mappings) {
-			for (mapping of mappings) {
+			for (let mapping of mappings) {
 				if (mapping.private.port == this.privatePort) {
 					cb(null, mapping)
 					return
@@ -121,9 +121,9 @@ Server.prototype.setPublicIP = function(ip) {
 }
 
 Server.prototype.localAddresses = function(port) {
-	result = []
-	interfaces = os.networkInterfaces()
-	for (name in interfaces) {
+	let result = []
+	let interfaces = os.networkInterfaces()
+	for (let name in interfaces) {
 		for (address of interfaces[name]) {
 			if (!address.internal && address.family=='IPv4' && !address.address.startsWith('169.254.')) {
 				result.push(address.address+':'+port)
@@ -138,7 +138,7 @@ Server.prototype.addresses = function() {
 		return []
 	}
 
-	addresses = this.localAddresses(this.privatePort)
+	let addresses = this.localAddresses(this.privatePort)
 
 	if (this.publicIP && this.publicPort) {
 		addresses.unshift(this.publicIP+':'+this.publicPort)
