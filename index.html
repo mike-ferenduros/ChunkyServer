@@ -31,18 +31,28 @@
 
 		<script>
 			function updateFolders() {
-				$('ul#folders').empty()
-				for (folder of remote.getGlobal('config').folders) {
-					$('ul#folders').append('<li>'+folder.name+'</li>')
-				}
+				$('ul#folders').empty().append(remote.getGlobal('config').folders.map((folder) => {
+					let li = $('<li>')
+					li.append($('<span>').text(folder.name))
+					li.append($('<button>').addClass('remove').text('Remove').click(() => {
+						ipcRenderer.send('remove-folder', folder)
+						return false
+					}))
+					return li
+				}))
 			}
 			ipcRenderer.on('update-folders', updateFolders)
 
 			function updateClients() {
-				$('ul#clients').empty()
-				for (client of remote.getGlobal('config').clients) {
-					$('ul#clients').append('<li>'+client.name+'</li>')
-				}
+				$('ul#clients').empty().append(remote.getGlobal('config').clients.map((client) => {
+					let li = $('<li>')
+					li.append($('<span>').text(client.name))
+					li.append($('<button>').addClass('remove').text('Remove').click(() => {
+						ipcRenderer.send('remove-client', client)
+						return false
+					}))
+					return li
+				}))
 			}
 			ipcRenderer.on('update-clients', updateClients)
 

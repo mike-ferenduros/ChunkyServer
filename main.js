@@ -193,10 +193,26 @@ function addFolder() {
 	})
 }
 
+function removeFolder(event, arg) {
+	console.log(arg)
+	global.config.folders = global.config.folders.filter((folder) => folder.path != arg.path)
+	saveConfig()
+	foldersChanged()
+}
+
+function removeClient(event, arg) {
+	console.log(arg)
+	global.config.clients = global.config.clients.filter((client) => client.key != arg.key)
+	saveConfig()
+	clientsChanged()
+}
+
 
 
 ipcMain.on('offer', offer)
 ipcMain.on('add-folder', addFolder)
+ipcMain.on('remove-folder', removeFolder)
+ipcMain.on('remove-client', removeClient)
 
 
 
