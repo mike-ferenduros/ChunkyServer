@@ -25,9 +25,9 @@ function opdsDownloadURL(path) {
 
 function opdsID(kind,path) {
 	if (path == null) {
-		return ['urn','chunkyserver',global.config.serverid,'root'].join(':')
+		return ['urn','chunkyserver',global.config.cert.fingerprint,'root'].join(':')
 	} else {
-		return ['urn','chunkyserver',global.config.serverid,kind,sha1(path)].join(':')
+		return ['urn','chunkyserver',global.config.cert.fingerprint,kind,sha1(path)].join(':')
 	}
 }
 

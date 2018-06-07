@@ -20,7 +20,7 @@ if (fs.existsSync(configPath)) {
 	global.config = JSON.parse(fs.readFileSync(configPath))
 } else {
 	global.config = {
-		serverid: uuidv4(),
+		cert: require('./cert').genCert(),
 		folders: [],
 		clients: []
 	}
@@ -229,7 +229,7 @@ function handleClaim(req,res) {
 
 		clientsChanged()
 
-		res.status(200).send({name: os.hostname()})
+		res.status(200).send({name: os.hostname(), fingerprint: global.config.cert.fingerprint})
 	} else {
 		res.status(401).send('Unauthorised')
 	}
@@ -277,7 +277,7 @@ function startServer() {
 		return
 	}
 
-	server = require('./server')(12345)
+	server = require('./server')(global.config.cert, 12345)
 
 	server.server.get('/folders', handleFolders)
 	server.server.get('/files', handleFiles)

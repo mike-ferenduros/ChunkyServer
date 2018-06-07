@@ -3,6 +3,7 @@ let fs = require('fs')
 let util = require('util')
 let uuidv4 = require('uuid/v4')
 let express = require('express')
+let https = require('https')
 let bodyParser = require('body-parser')
 let upnp = require('nat-upnp')
 
@@ -14,7 +15,7 @@ module.exports = function(port, ttl) {
 }
 
 
-function Server(port, ttl) {
+function Server(cert, port, ttl) {
 	EventEmitter.call(this)
 
 	this.server = express()
@@ -28,7 +29,9 @@ function Server(port, ttl) {
 	this.publicIP = null
 	this.running = true
 
-	this.listener = this.server.listen(port || 0, () => {
+	this.https = https.createServer(cert, this.server)
+
+	this.listener = this.https.listen(port || 0, () => {
 		if (!this.running) {
 			return
 		}

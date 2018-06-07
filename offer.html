@@ -6,7 +6,7 @@
 		<script>
 			const {ipcRenderer, remote} = require('electron')
 			window.$ = window.jQuery = require('jquery')
-			qrcode = require('qrcode')
+			let qrcode = require('qrcode')
 		</script>
 	</head>
 	<body>
@@ -15,13 +15,13 @@
 		<img id='qrcode'>
 		<script>
 			function update() {
-				serverid = remote.getGlobal('config').serverid
-				addresses = remote.getGlobal('addresses')
-				key = remote.getGlobal('offerKey')
+				let fingerprint = remote.getGlobal('config').cert.fingerprint
+				let addresses = remote.getGlobal('serverAddresses')
+				let key = remote.getGlobal('offerKey')
 				$('div#addresses').text(addresses.join(', '))
-				$('div#key').text(key)
 
-				qrbody = ['chunky',serverid,key].concat(addresses).join('/').toUpperCase()
+				let qrbody = ['chunky',fingerprint,key].concat(addresses).join('/').toUpperCase()
+				$('div#key').text(qrbody)
 				qrcode.toDataURL(qrbody, {errorCorrectionLevel: 'L'}, (err,url) => {
 					$('img#qrcode').attr('src', url)
 				})

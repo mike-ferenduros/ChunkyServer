@@ -16,6 +16,7 @@
     "express": "^4.16.3",
     "jquery": "^3.3.1",
     "nat-upnp": "^1.1.1",
+    "node-forge": "^0.7.5",
     "qrcode": "^1.2.0",
     "sha1": "^1.1.1",
     "xml-writer": "^1.7.0"
