@@ -5,6 +5,7 @@ const util = require('util')
 const uuidv4 = require('uuid/v4')
 const opds = require('./opds')
 const basename = require('path').basename
+const request = require('request')
 
 
 let server = null
@@ -26,7 +27,6 @@ if (fs.existsSync(configPath)) {
 	}
 	saveConfig()
 }
-console.log(global.config)
 
 
 
@@ -82,18 +82,58 @@ function checkPath(path, client) {
 
 
 let lastSentAddresses = null
+let lastSentAddressesReceived = true
+let lastSentAddressesTimeout = null
 
 function updateServerAddresses(addresses) {
 	global.serverAddresses = addresses
 
 	let astring = JSON.stringify(addresses)
-	if (astring != lastSentAddresses) {
-		lastSentAddresses = astring
-		console.log('Local addresses changed to '+addresses)
+	if (astring == lastSentAddresses) {
+		return
 	}
+
+	lastSentAddresses = astring
+	console.log('Local addresses changed to '+addresses)
+
+	if (lastSentAddressesTimeout) {
+		clearTimeout(lastSentAddressesTimeout)
+	}
+
+	//Noone to update
+	let keys = global.config.clients.map((c) => c.key)
+	if (keys.length == 0) {
+		serverStateChanged()
+		lastSentAddressesReceived = true
+		return
+	}
+
+	lastSentAddressesReceived = false
+	lastSentAddressesTimeout = setTimeout(()=>{
+		console.log('Sending address update')
+
+		let req = {
+			url: 'https://facetube.fish:20051/update',
+			body: JSON.stringify({addresses: addresses, keys: keys}),
+			headers: {'Content-Type':'application/json'},
+			strictSSL: false
+		}
+		request.post(req, (err,resp,body) => {
+
+			if (err) {
+				console.log('Failed to deliver address update: ' + err)
+			} else {
+				console.log('Delivered address update -> '+body)
+				//FIXME: Check response and prune client keys accordingly
+				if (astring == lastSentAddresses) {
+					lastSentAddressesReceived = true
+				}
+			}
+			serverStateChanged()
+		})
+	}, 2000)
+	serverStateChanged()
 }
-
-
 
 
 
@@ -194,14 +234,12 @@ function addFolder() {
 }
 
 function removeFolder(event, arg) {
-	console.log(arg)
 	global.config.folders = global.config.folders.filter((folder) => folder.path != arg.path)
 	saveConfig()
 	foldersChanged()
 }
 
 function removeClient(event, arg) {
-	console.log(arg)
 	global.config.clients = global.config.clients.filter((client) => client.key != arg.key)
 	saveConfig()
 	clientsChanged()
@@ -237,6 +275,12 @@ function handleClaim(req,res) {
 
 
 
+global.serverState = {
+	running: false,
+	status: 'stopped',
+	addresses: [],
+	dnsSent: false
+}
 
 
 function serverStateChanged() {
@@ -247,7 +291,8 @@ function serverStateChanged() {
 	global.serverState = {
 		running: server != null,
 		status: server ? 'running' : 'stopped',
-		natStatus: addresses.join(', ')
+		addresses: addresses.join(', '),
+		dnsSent: lastSentAddressesReceived
 	}
 
 	if (mainWindow) {
@@ -269,6 +314,7 @@ function foldersChanged() {
 		mainWindow.send('update-folders')
 	}
 }
+
 
 
 function startServer() {

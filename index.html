@@ -22,7 +22,8 @@
 		<h3>Server</h3>
 		<div id='server'>
 			<span class='status'></span>
-			<span class='nat'></span>
+			<span class='addresses'></span>
+			<span class='dns'></span>
 			<button class='stop'>Stop</button>
 			<button class='start'>Start</button>
 		</div>
@@ -60,7 +61,8 @@
 				serverState = remote.getGlobal('serverState')
 				$('div#server').toggleClass('running', serverState.running)
 				$('div#server .status').text(serverState.status)
-				$('div#server .nat').text(serverState.natStatus)
+				$('div#server .addresses').text(serverState.addresses)
+				$('div#server .dns').text(serverState.dnsSent ? 'Synced' : 'Not synced')
 			}
 			ipcRenderer.on('update-server', updateServer)
 
@@ -68,8 +70,6 @@
 			$('div#server button.start').click(() => ipcRenderer.send('start-server'))
 			$('button#offer').click(() => ipcRenderer.send('offer'))
 			$('button#addFolder').click(() => ipcRenderer.send('add-folder'))
-
-
 
 			updateFolders()
 			updateClients()
