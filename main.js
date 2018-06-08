@@ -5,13 +5,15 @@ const util = require('util')
 const uuidv4 = require('uuid/v4')
 const opds = require('./opds')
 const basename = require('path').basename
+const pathsep = require('path').sep
+const pathjoin = require('path').join
 const request = require('request')
 
 
 let server = null
 
 
-const configPath = app.getPath('userData') + '/config.json'
+const configPath = pathjoin(app.getPath('userData'),'config.json')
 
 function saveConfig() {
 	fs.writeFileSync(configPath, JSON.stringify(global.config))
@@ -70,7 +72,7 @@ function checkPath(path, client) {
 		let checked = fs.realpathSync(path)
 		if (checked) {
 			for (let folder of global.config.folders) {
-				if ((checked+'/').startsWith(folder.path+'/')) {
+				if ((checked+pathsep).startsWith(folder.path+pathsep)) {
 					return checked
 				}
 			}
