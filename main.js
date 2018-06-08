@@ -19,22 +19,27 @@ function saveConfig() {
 	fs.writeFileSync(configPath, JSON.stringify(global.config))
 }
 
-if (fs.existsSync(configPath)) {
-	global.config = JSON.parse(fs.readFileSync(configPath))
-} else {
-	global.config = {
-		cert: require('./cert').genCert(),
-		folders: [],
-		clients: []
-	}
-	saveConfig()
-}
-
 
 
 let mainWindow
 
 function appReady() {
+	if (fs.existsSync(configPath)) {
+		global.config = JSON.parse(fs.readFileSync(configPath))
+	} else {
+		global.config = {
+			cert: require('./cert').genCert(),
+			folders: [],
+			clients: []
+		}
+		saveConfig()
+	}
+
+
+	startServer()
+
+
+
 	mainWindow = new BrowserWindow({width: 800, height: 600})
 	mainWindow.loadFile('index.html')
 
@@ -349,9 +354,6 @@ function stopServer() {
 
 	cancelOffer()
 }
-
-startServer()
-
 
 ipcMain.on('start-server', () => startServer())
 ipcMain.on('stop-server', () => stopServer())
