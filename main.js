@@ -108,7 +108,7 @@ function updateServerAddresses(addresses) {
 	}
 
 	//Noone to update
-	let keys = global.config.clients.map((c) => c.key)
+	let keys = global.config.clients.map((c) => c.recordid || c.key)
 	if (keys.length == 0) {
 		serverStateChanged()
 		lastSentAddressesReceived = true
@@ -264,12 +264,24 @@ ipcMain.on('remove-client', removeClient)
 function handleClaim(req,res) {
 
 	if (global.offerKey && req.headers.authorization == global.offerKey && req.body.name && req.body.id) {
+		let client = null
+		for (existing of global.config.clients) {
+			if (existing.id == req.body.id) {
+				client = existing
+				break
+			}
+		}
+		if (!client) {
+			client = {id: req.body.id}
+			global.config.clients.push(client)
+		}
 
-		let newClient = {key: global.offerKey, name: req.body.name, id: req.body.id}
+		client.key = global.offerKey
+		client.name = req.body.name
+		client.recordid = req.body.recordid || global.offerKey		//transitional - current clients will ALWAYS send recordid
 
 		cancelOffer()
 
-		global.config.clients.push(newClient)
 		saveConfig()
 
 		clientsChanged()
