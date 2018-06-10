@@ -2,24 +2,88 @@
 <html>
 	<head>
 		<meta charset="UTF-8">
-		<title>Hello World!</title>
+		<title>ChunkyServer</title>
 		<script>
-		window.$ = window.jQuery = require('jquery')
-		const {ipcRenderer, remote} = require('electron')
+			window.$ = window.jQuery = require('jquery')
+			const {ipcRenderer, remote, webFrame} = require('electron')
+			webFrame.setVisualZoomLevelLimits(1, 1)
+			webFrame.setLayoutZoomLevelLimits(0, 0)
 		</script>
+		<style>
+			body {
+				font-family: sans-serif;
+				padding: 0 20px;
+			}
+
+			.table-scroll {
+				height: 150px;
+				padding-right: 15px;
+				overflow-y: scroll;
+			}
+
+			table {
+				width: 100%;
+				overflow: scroll;
+			}
+
+			tr {
+				background-color: #F8F8F8;
+				width: 100%;
+			}
+
+			td:last-child {
+				width: 1%;
+			}
+
+			td .name {
+				display: inline-block;
+				padding: 8px;
+			}
+
+			button {
+				outline: none;
+			}
+
+			td button.remove {
+				display: inline-block;
+				height: 100%;
+				padding: 8px;
+				float: right;
+			}
+
+			button.add {
+				background-color: #080;
+				width: 30px;
+				height: 30px;
+				border: none;
+				border-radius: 15px;
+				color: white;
+				text-align: center;
+				display: inline-block;
+				font-size: 20px;
+
+				margin-left: 10px;
+			}
+			button.add:hover {
+				background-color: #0A0
+			}
+
+			button.remove {
+				background-color: #E00;
+				color: white;
+				border: none;
+				text-align: center;
+				display: inline-block;
+				font-size: 13px;
+			}
+			button.remove:hover {
+				background-color: #F00
+			}
+
+		</style>
 	</head>
 	<body>
-		<h1>Hello World!</h1>
-
-		<h3>Folders</h3>
-		<ul id='folders'></ul>
-		<button id='addFolder'>Add folder</button>
-
-		<h3>Clients</h3>
-		<ul id='clients'></ul>
-		<button id='offer'>Add client</button>
-
-		<h3>Server</h3>
+		<h1><script>document.write(require('os').hostname())</script></h1>
 		<div id='server'>
 			<span class='status'></span>
 			<span class='addresses'></span>
@@ -28,31 +92,41 @@
 			<button class='start'>Start</button>
 		</div>
 
+		<h3>Allowed Users<button id='offer' class='add'>+</button></h3>
+		<div class='table-scroll'>
+			<table id='clients'></table>
+		</div>
 
+
+		<h3>Shared Folders<button id='addFolder' class='add'>+</button></h3>
+		<div class='table-scroll'>
+			<table id='folders'></table>
+		</div>
 
 		<script>
 			function updateFolders() {
-				$('ul#folders').empty().append(remote.getGlobal('config').folders.map((folder) => {
-					let li = $('<li>')
-					li.append($('<span>').text(folder.name))
-					li.append($('<button>').addClass('remove').text('Remove').click(() => {
+				$('table#folders').empty().append(remote.getGlobal('config').folders.map((folder) => {
+					let tr = $('<tr>')
+					tr.append($('<td>').addClass('name').text(folder.name))
+					tr.append($('<td>').append($('<button>').addClass('remove').text('Remove').click(() => {
 						ipcRenderer.send('remove-folder', folder)
 						return false
-					}))
-					return li
+					})))
+					return tr
 				}))
 			}
 			ipcRenderer.on('update-folders', updateFolders)
 
 			function updateClients() {
-				$('ul#clients').empty().append(remote.getGlobal('config').clients.map((client) => {
-					let li = $('<li>')
-					li.append($('<span>').text(client.name))
-					li.append($('<button>').addClass('remove').text('Remove').click(() => {
+				$('table#clients').empty().append(remote.getGlobal('config').clients.map((client) => {
+					let tr = $('<tr>')
+					tr.append($('<td>').addClass('name').text(client.name))
+					tr.append($('<td>').append($('<button>').addClass('remove').text('Remove').click(() => {
+						if (confirm("Remove "+client.name+"'s access to this server?"))
 						ipcRenderer.send('remove-client', client)
 						return false
-					}))
-					return li
+					})))
+					return tr
 				}))
 			}
 			ipcRenderer.on('update-clients', updateClients)

@@ -40,7 +40,7 @@ function appReady() {
 
 
 
-	mainWindow = new BrowserWindow({width: 800, height: 600})
+	mainWindow = new BrowserWindow({width: 800, height: 600, resizable: false})
 	mainWindow.loadFile('index.html')
 
 //	mainWindow.webContents.openDevTools()
@@ -49,7 +49,6 @@ function appReady() {
 }
 
 app.on('window-all-closed', () => app.quit())
-
 app.on('ready', appReady)
 
 
@@ -203,7 +202,7 @@ function offer() {
 	}
 	global.offerKey = uuidv4()
 
-	offerWindow = new BrowserWindow({width: 800, height: 600})
+	offerWindow = new BrowserWindow({width: 600, height: 300, resizable: false, frame: false})
 	offerWindow.loadFile('offer.html')
 
 	offerWindow.on('closed', () => {

@@ -2,26 +2,65 @@
 <html>
 	<head>
 		<meta charset="UTF-8">
-		<title>OFFER</title>
+		<title>Add User</title>
 		<script>
 			const {ipcRenderer, remote} = require('electron')
 			window.$ = window.jQuery = require('jquery')
 			let qrcode = require('qrcode')
 		</script>
+		<style>
+			body {
+				font-family: sans-serif;
+				background-color: white;
+			}
+
+			#qrcode {
+				display: block;
+				float: left;
+			}
+
+			#instructions {
+				display: inline-block;
+				margin-top: 16px;
+			}
+
+			button#cancel {
+				margin-top: 16px;
+				outline: none;
+				float: right;
+				background-color: #888;
+				border: none;
+				color: white;
+				text-align: center;
+				display: inline-block;
+				padding: 10px;
+				font-size: 16px;
+
+				margin-left: 10px;
+			}
+			button#cancel:hover {
+				background-color: #999
+			}
+		</style>
 	</head>
 	<body>
-		<div id='addresses'></div>
-		<div id='key'></div>
 		<img id='qrcode'>
+		<button id='cancel'>Cancel</button>
+		<span id='instructions'>
+			In the ChunkyTNG app:<br>
+			1. Tap the cloud icon<br>
+			2. Tap 'Add server'<br>
+			3. Select 'ChunkyServer' from the list<br>
+			4. Scan this code<br>
+		</span>
+
 		<script>
 			function update() {
 				let fingerprint = remote.getGlobal('config').cert.fingerprint
 				let addresses = remote.getGlobal('serverAddresses')
 				let key = remote.getGlobal('offerKey')
-				$('div#addresses').text(addresses.join(', '))
 
 				let qrbody = ['chunky',fingerprint,key].concat(addresses).join('/').toUpperCase()
-				$('div#key').text(qrbody)
 				qrcode.toDataURL(qrbody, {errorCorrectionLevel: 'L'}, (err,url) => {
 					$('img#qrcode').attr('src', url)
 				})
@@ -29,6 +68,8 @@
 
 			ipcRenderer.on('server-changed', update)
 			update()
+
+			$('button#cancel').click(() => remote.getCurrentWindow().close())
 
 		</script>
 	</body>
