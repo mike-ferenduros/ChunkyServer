@@ -14,10 +14,16 @@
 		"appId": "net.mike-ferenduros.chunkyserver",
 		"productName": "ChunkyServer",
 		"mac": {
-			"target": "zip"
+			"target": "zip",
+			"publish": ["github"]
 		},
 		"win": {
-			"target": "nsis"
+			"target": "nsis",
+			"certificateFile": "authenticode.p12",
+			"certificatePassword": "a",
+			"publish": ["github"]
+		},
+		"nsis": {
 		}
 	},
 	"devDependencies": {
