@@ -23,6 +23,10 @@ function opdsDownloadURL(path) {
 	return '/file?path='+encodeURIComponent(path)
 }
 
+function opdsCoverURL(path) {
+	return '/cover?path='+encodeURIComponent(path)
+}
+
 function opdsID(kind,path) {
 	if (path == null) {
 		return ['urn','chunkyserver',global.config.cert.fingerprint,'root'].join(':')
@@ -173,6 +177,12 @@ module.exports = {
 						xml.writeAttribute('href',opdsDownloadURL(file))
 						xml.writeAttribute('rel','http://opds-spec.org/acquisition')
 						xml.writeAttribute('type', mimetype)
+						xml.endElement()
+
+						xml.startElement('link')
+						xml.writeAttribute('href',opdsCoverURL(file))
+						xml.writeAttribute('rel','http://opds-spec.org/image')
+						xml.writeAttribute('type', 'image/jpeg')					//this is a total lie
 						xml.endElement()
 
 						xml.endElement()		//entry

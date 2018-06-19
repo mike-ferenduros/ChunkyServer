@@ -2,29 +2,34 @@
 	"name": "chunkyserver",
 	"version": "0.0.3",
 	"description": "A comic-server for ChunkyTNG",
-	"author": { "email": "mike.ferenduros@gmail.com", "name": "Michael Ferenduros" },
-
+	"author": {
+		"email": "mike.ferenduros@gmail.com",
+		"name": "Michael Ferenduros"
+	},
 	"main": "main.js",
 	"scripts": {
 		"start": "electron .",
-	    "pack": "electron-builder --dir",
-	    "dist": "electron-builder"
+		"pack": "electron-builder --dir",
+		"dist": "electron-builder"
 	},
 	"build": {
 		"appId": "net.mike-ferenduros.chunkyserver",
 		"productName": "ChunkyServer",
 		"mac": {
 			"target": "zip",
-			"publish": ["github"]
+			"publish": [
+				"github"
+			]
 		},
 		"win": {
 			"target": "nsis",
 			"certificateFile": "authenticode.p12",
 			"certificatePassword": "a",
-			"publish": ["github"]
+			"publish": [
+				"github"
+			]
 		},
-		"nsis": {
-		}
+		"nsis": {}
 	},
 	"devDependencies": {
 		"electron": "^2.0.2",
@@ -37,6 +42,9 @@
 		"node-forge": "^0.7.5",
 		"qrcode": "^1.2.0",
 		"sha1": "^1.1.1",
-		"xml-writer": "^1.7.0"
+		"string-natural-compare": "^2.0.2",
+		"tmp": "0.0.33",
+		"xml-writer": "^1.7.0",
+		"yauzl": "^2.9.2"
 	}
 }

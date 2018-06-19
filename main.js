@@ -3,11 +3,13 @@ const os = require('os')
 const fs = require('fs')
 const util = require('util')
 const uuidv4 = require('uuid/v4')
-const opds = require('./opds')
 const basename = require('path').basename
 const pathsep = require('path').sep
 const pathjoin = require('path').join
 const request = require('request')
+
+const opds = require('./opds')
+const unarch = require('./unarch')
 
 
 let server = null
@@ -188,6 +190,27 @@ function handleFile(req,res) {
 	}
 }
 
+function handleCover(req,res) {
+	let client = requestClient(req)
+	if (client) {
+		let path = checkPath(req.query.path,client)
+		if (path) {
+			unarch.openCoverStream(path, (err, stream) => {
+				if (err) {
+					res.status(500).send('Error extracting cover')
+				} else {
+					res.writeHead(200)
+					stream.pipe(res)
+				}
+			})
+		} else {
+			res.status(403).send('Unauthorised')
+		}
+	} else {
+		res.status(401).send('Unauthorised')
+	}
+}
+
 
 
 let offerWindow = null
@@ -346,6 +369,7 @@ function startServer() {
 	server.server.get('/folders', handleFolders)
 	server.server.get('/files', handleFiles)
 	server.server.get('/file', handleFile)
+	server.server.get('/cover', handleCover)
 
 	server.server.post('/claim', handleClaim)
 
