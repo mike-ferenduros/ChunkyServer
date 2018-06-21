@@ -200,7 +200,10 @@ function handleCover(req,res) {
 					res.status(500).send('Error extracting cover')
 				} else {
 					res.writeHead(200)
-					stream.pipe(res)
+
+					stream.on('data', (data) => res.write(data))
+					stream.on('end', () => res.end())
+					stream.on('error', () => res.end())
 				}
 			})
 		} else {
