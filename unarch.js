@@ -66,21 +66,21 @@ module.exports = {
 			let page = contents[0]
 
 			let tmpdir = tmp.dirSync()
-			console.log(`unrar: ${rarpath} , ${page}`)
+//			console.log(`unrar: ${rarpath} , ${page}`)
 			execFile(unrar, ['e', rarpath, page], {cwd: tmpdir.name}, (err, sout, serr) => {
 				if (err) {
-					console.log(`failed: ${err}`)
+//					console.log(`failed: ${err}`)
 					tmpdir.removeCallback()
 					return cb(err)
 				}
 
 				let src = pathjoin(tmpdir.name, pathparse(page).base)
 				let dest = tmp.tmpNameSync()
-				console.log(`Rename: ${src} -> ${dest}`)
+//				console.log(`Rename: ${src} -> ${dest}`)
 				fs.rename(src, dest, (err) => {
 					tmpdir.removeCallback()
 					if (err) {
-						console.log(`Rename failed ${err}`)
+//						console.log(`Rename failed ${err}`)
 						fs.unlink(src, (err)=>{})
 						return cb(err)
 					}
