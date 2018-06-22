@@ -21,7 +21,7 @@ let binpath = process.defaultApp ? process.cwd() : process.resourcesPath
 if (process.platform == 'darwin') {
 	unrar = pathjoin(binpath, 'unrar_MacOSX_10.13.2_64bit')
 } else if (process.platform == 'win32') {
-	unrar = pathjoin(binpath, 'unrarw32.exe')
+	unrar = pathjoin(binpath, 'UnRAR.exe')
 }
 
 if (unrar && !fs.existsSync(unrar)) {

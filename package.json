@@ -1,6 +1,6 @@
 {
 	"name": "chunkyserver",
-	"version": "0.0.4",
+	"version": "0.0.5",
 	"description": "A comic-server for ChunkyTNG",
 	"author": {
 		"email": "mike.ferenduros@gmail.com",
@@ -23,7 +23,7 @@
 			]
 		},
 		"win": {
-			"extraResources": ["unrarw32.exe"],
+			"extraResources": ["UnRAR.exe"],
 			"target": "nsis",
 			"certificateFile": "authenticode.p12",
 			"certificatePassword": "a",
