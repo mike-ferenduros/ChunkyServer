@@ -1,6 +1,6 @@
 {
 	"name": "chunkyserver",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"description": "A comic-server for ChunkyTNG",
 	"author": {
 		"email": "mike.ferenduros@gmail.com",
@@ -16,12 +16,14 @@
 		"appId": "net.mike-ferenduros.chunkyserver",
 		"productName": "ChunkyServer",
 		"mac": {
+			"extraResources": ["unrar_MacOSX_10.13.2_64bit"],
 			"target": "zip",
 			"publish": [
 				"github"
 			]
 		},
 		"win": {
+			"extraResources": ["unrarw32.exe"],
 			"target": "nsis",
 			"certificateFile": "authenticode.p12",
 			"certificatePassword": "a",

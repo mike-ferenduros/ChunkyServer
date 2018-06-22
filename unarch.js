@@ -17,10 +17,16 @@ function isImageName(name) {
 
 
 let unrar = null
+let binpath = process.defaultApp ? process.cwd() : process.resourcesPath
 if (process.platform == 'darwin') {
-	unrar = pathjoin(process.cwd(), 'bin/unrar_MacOSX_10.13.2_64bit')
+	unrar = pathjoin(binpath, 'unrar_MacOSX_10.13.2_64bit')
 } else if (process.platform == 'win32') {
-	unrar = pathjoin(process.cwd(), 'bin\\unrarw32.exe')
+	unrar = pathjoin(binpath, 'unrarw32.exe')
+}
+
+if (unrar && !fs.existsSync(unrar)) {
+	console.log("Bad unrar binary path")
+	unrar = null
 }
 
 
