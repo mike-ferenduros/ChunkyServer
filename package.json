@@ -1,6 +1,6 @@
 {
 	"name": "chunkyserver",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"description": "A comic-server for ChunkyTNG",
 	"author": {
 		"email": "mike.ferenduros@gmail.com",

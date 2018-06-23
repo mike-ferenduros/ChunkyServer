@@ -321,6 +321,13 @@ function handleClaim(req,res) {
 	}
 }
 
+function handleAbout(req, res) {
+	if (requestClient(req)) {
+		res.status(200).send({version: app.getVersion(), protocol: 1})
+	} else {
+		res.status(401).send('Unauthorised')
+	}
+}
 
 
 global.serverState = {
@@ -373,6 +380,7 @@ function startServer() {
 
 	server = require('./server')(global.config.cert, 12345)
 
+	server.server.get('/about', handleAbout)
 	server.server.get('/folders', handleFolders)
 	server.server.get('/files', handleFiles)
 	server.server.get('/file', handleFile)
