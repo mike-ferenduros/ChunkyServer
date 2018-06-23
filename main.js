@@ -1,3 +1,4 @@
+
 const {app, BrowserWindow, ipcMain, dialog} = require('electron')
 const os = require('os')
 const fs = require('fs')
@@ -7,7 +8,7 @@ const basename = require('path').basename
 const pathsep = require('path').sep
 const pathjoin = require('path').join
 const request = require('request')
-
+const {autoUpdater} = require('electron-updater')
 const opds = require('./opds')
 const unarch = require('./unarch')
 
@@ -20,6 +21,7 @@ const configPath = pathjoin(app.getPath('userData'),'config.json')
 function saveConfig() {
 	fs.writeFileSync(configPath, JSON.stringify(global.config))
 }
+
 
 
 
@@ -36,6 +38,8 @@ function appReady() {
 		}
 		saveConfig()
 	}
+
+	autoUpdater.checkForUpdatesAndNotify()
 
 
 	startServer()
