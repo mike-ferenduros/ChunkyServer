@@ -106,6 +106,11 @@ module.exports = {
 
 			let cover = null
 
+			zip.on('error', () => {
+				cb('ziperr')
+				zip.close()
+			})
+
 			zip.on('entry', (entry) => {
 				if (isImageName(entry.fileName)) {
 					if (!cover || pageCompare(entry.fileName, cover.fileName) < 0) {
