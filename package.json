@@ -1,6 +1,6 @@
 {
 	"name": "chunkyserver",
-	"version": "0.0.7",
+	"version": "0.0.8",
 	"description": "A comic-server for ChunkyTNG",
 	"author": {
 		"email": "mike.ferenduros@gmail.com",
@@ -52,6 +52,6 @@
 		"string-natural-compare": "^2.0.2",
 		"tmp": "0.0.33",
 		"xml-writer": "^1.7.0",
-		"yauzl": "^2.9.2"
+		"yauzl": "^2.10.0"
 	}
 }
