@@ -66,13 +66,17 @@ function showMainWindow() {
 	if (!mainWindow) {
 		mainWindow = new BrowserWindow({width: 800, height: 600, resizable: false, skipTaskbar: true})
 		mainWindow.loadFile('index.html')
-		app.dock.show()
+		if (app.dock) {}
+			app.dock.show()
+		}
 
 // 	 	mainWindow.webContents.openDevTools()
 
 		mainWindow.on('closed', () => {
 			mainWindow = null
-			app.dock.hide()
+			if (app.dock) {}
+				app.dock.hide()
+			}
 		})
 	}
 }
