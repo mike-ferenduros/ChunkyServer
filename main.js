@@ -22,6 +22,7 @@ function saveConfig() {
 	fs.writeFileSync(configPath, JSON.stringify(global.config))
 }
 
+global.defaultPort = 12300
 
 
 
@@ -290,12 +291,20 @@ function toggleNat(event, enable) {
 	}
 }
 
+function setPort(event, port) {
+	console.log('setPort ' + port)
+	let p = Number(port)
+	global.config.port = isNaN(p) ? null : p
+	saveConfig()
+}
+
 
 ipcMain.on('offer', offer)
 ipcMain.on('add-folder', addFolder)
 ipcMain.on('remove-folder', removeFolder)
 ipcMain.on('remove-client', removeClient)
 ipcMain.on('toggle-nat', toggleNat)
+ipcMain.on('set-port', setPort)
 
 
 
@@ -387,7 +396,7 @@ function startServer() {
 		return
 	}
 
-	server = require('./server')(global.config.cert, 12345)
+	server = require('./server')(global.config.cert, global.config.port || global.defaultPort)
 
 	server.server.get('/about', handleAbout)
 	server.server.get('/folders', handleFolders)

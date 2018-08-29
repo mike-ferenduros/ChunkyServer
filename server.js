@@ -161,8 +161,12 @@ Server.prototype.addresses = function() {
 
 	let addresses = this.localAddresses(this.privatePort)
 
-	if (this.publicIP && this.publicPort) {
-		addresses.unshift(this.publicIP+':'+this.publicPort)
+	if (this.nat) {
+		if (this.publicIP && this.publicPort) {
+			addresses.unshift(this.publicIP+':'+this.publicPort)
+		} else {
+			addresses.unshift('0.0.0.0:'+this.privatePort)
+		}
 	}
 	return addresses
 }

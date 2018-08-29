@@ -86,31 +86,42 @@
 				height: 16px;
 				border-radius: 8px;
 			}
+			
+			button.start-stop {
+				background-color: #555;
+				width: 64px;
+				height: 24px;
+				border: none;
+				border-radius: 12px;
+				color: white;
+				text-align: center;
+				display: inline-block;
+				font-size: 16px;
+
+				margin-left: 10px;
+				margin-bottom: 20px;
+			}
 
 		</style>
 	</head>
 	<body>
-		<h1><script>document.write(require('os').hostname())</script></h1>
+		<h1>
+			<span class='server-status status-light' style='background-color: red; margin-bottom: 2px' title='stopped'></span>
+			<script>document.write(require('os').hostname())</script>
+			<button class='start-stop'>Start</button>
+		</h1>
 
 		<div id='server'>
-			<span class='status'></span>
-			<span class='addresses'></span>
-			<span class='dns'></span>
-
 			<div>
 				<label for='port'>Port</label>
 				<input id='port' placeholder='12345' type='number' min='1' max='65535'>
 			</div>
 
 			<div>
-				<label for='nat'>Available over the internet</label>
+				<label for='nat'>Connect over the internet</label>
 				<input id='nat' type='checkbox'>
 			</div>
 
-			<div>
-				<button class='start-stop'>Start</button>
-				<span class='status-light' style='background-color: red' title='stopped'>
-			</div>
 		</div>
 
 
@@ -156,15 +167,29 @@
 			function updateServer() {
 				serverState = remote.getGlobal('serverState')
 				$('div#server').toggleClass('running', serverState.running)
-				$('div#server .status').text(serverState.status)
-				$('div#server .addresses').text(serverState.addresses)
-				$('div#server .dns').text(serverState.dnsSent ? 'Synced' : 'Not synced')
+				$('input#port').prop('disabled', serverState.running)
+
+				$('button.start-stop').text(serverState.running ? 'Stop' : 'Start')
+				if (!serverState.running) {
+					$('span.server-status').css('background-color', 'red')
+				} else if (!serverState.dnsSent) {
+					$('span.server-status').css('background-color', 'orange')
+				} else {
+					$('span.server-status').css('background-color', 'green')
+				}
+				$('span.server-status').prop('title', serverState.addresses)
 			}
 			ipcRenderer.on('update-server', updateServer)
 
 			$('input#nat')[0].checked = remote.getGlobal('config').nat || false
-			$('input#nat').change(() => ipcRenderer.send('toggle-checkbox', this.checked))
-			$('div#server button.start-stop').click(() => ipcRenderer.send('toggle-server'))
+			$('input#port')[0].placeholder = remote.getGlobal('defaultPort')
+			if (remote.getGlobal('config').port) {
+				$('input#port')[0].value = remote.getGlobal('config').port
+			}
+
+			$('input#nat').change(() => ipcRenderer.send('toggle-nat', $('input#nat')[0].checked))
+			$('input#port').change(() => ipcRenderer.send('set-port', $('input#port')[0].value))
+			$('button.start-stop').click(() => ipcRenderer.send('toggle-server'))
 			$('button#offer').click(() => ipcRenderer.send('offer'))
 			$('button#addFolder').click(() => ipcRenderer.send('add-folder'))
 
