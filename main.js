@@ -49,7 +49,7 @@ function appReady() {
 	mainWindow = new BrowserWindow({width: 800, height: 600, resizable: false})
 	mainWindow.loadFile('index.html')
 
-//	mainWindow.webContents.openDevTools()
+	mainWindow.webContents.openDevTools()
 
 	mainWindow.on('closed', () => mainWindow = null)
 }
@@ -281,12 +281,21 @@ function removeClient(event, arg) {
 	clientsChanged()
 }
 
+function toggleNat(event, enable) {
+	console.log('toggleNat')
+	global.config.nat = Boolean(enable)
+	saveConfig()
+	if (server) {
+		server.updateNat()
+	}
+}
 
 
 ipcMain.on('offer', offer)
 ipcMain.on('add-folder', addFolder)
 ipcMain.on('remove-folder', removeFolder)
 ipcMain.on('remove-client', removeClient)
+ipcMain.on('toggle-nat', toggleNat)
 
 
 
@@ -405,5 +414,12 @@ function stopServer() {
 	cancelOffer()
 }
 
-ipcMain.on('start-server', () => startServer())
-ipcMain.on('stop-server', () => stopServer())
+function toggleServer() {
+	if (server) {
+		stopServer()
+	} else {
+		startServer()
+	}
+}
+
+ipcMain.on('toggle-server', () => toggleServer())

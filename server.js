@@ -28,6 +28,7 @@ function Server(cert, port, ttl) {
 	this.publicPort = null
 	this.publicIP = null
 	this.running = true
+	this.nat = false
 
 	this.https = https.createServer(cert, this.server)
 
@@ -39,9 +40,7 @@ function Server(cert, port, ttl) {
 		this.privatePort = this.listener.address().port
 
 		this.upnp = upnp.createClient()
-		this.refreshPublicIP(() => {
-			this.refreshMapping()
-		})
+		this.updateNat()
 
 		this.emit('started')
 		console.log('Listening on port '+this.privatePort)
@@ -49,30 +48,49 @@ function Server(cert, port, ttl) {
 }
 
 Server.prototype.stop = function() {
-	this.setMappingTimeout(null)
+	this.running = false
 
 	if(this.listener) {
 		console.log('Stopping listener')
 		this.listener.close()
 		this.listener = null
 	}
+	
+	this.updateNat()
+}
 
-	this.getMapping((err,mapping) => {
-		if (mapping) {
-			this.upnp.portUnmapping({public: mapping.public.port})
-			console.log('Killing mapping at public port '+mapping.public.port)
-		}
-	})
+Server.prototype.updateNat = function() {
+	if (global.config.nat == this.nat) {
+		return
+	}
 
-	this.running = false
+	this.nat = global.config.nat && this.running
+
+	if (this.nat) {
+		this.refreshPublicIP(() => {
+			if (this.nat) {
+				this.refreshMapping()
+			}
+		})
+	} else {
+		this.setMappingTimeout(null)
+		this.setPublicIP(null)
+		this.setPublicPort(null)
+		this.getMapping((err,mapping) => {
+			if (mapping && !this.nat) {
+				this.upnp.portUnmapping({public: mapping.public.port})
+				console.log('Killing mapping at public port '+mapping.public.port)
+			}
+		})
+	}
 }
 
 Server.prototype.refreshPublicIP = function(cb) {
-	if (!this.running) {
+	if (!this.nat) {
 		return
 	}
 	this.upnp.externalIp((err,ip) => {
-		if (ip) {
+		if (ip && this.nat) {
 			this.setPublicIP(ip)
 		}
 		cb(err, ip)

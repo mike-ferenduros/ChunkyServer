@@ -16,7 +16,7 @@
 			}
 
 			.table-scroll {
-				height: 150px;
+				height: 120px;
 				overflow-y: scroll;
 				border: 1px solid #EEE;
 			}
@@ -80,19 +80,41 @@
 				background-color: #F00
 			}
 
+			span.status-light {
+				display: inline-block;
+				width: 16px;
+				height: 16px;
+				border-radius: 8px;
+			}
+
 		</style>
 	</head>
 	<body>
 		<h1><script>document.write(require('os').hostname())</script></h1>
+
 		<div id='server'>
 			<span class='status'></span>
 			<span class='addresses'></span>
 			<span class='dns'></span>
-			<button class='stop'>Stop</button>
-			<button class='start'>Start</button>
+
+			<div>
+				<label for='port'>Port</label>
+				<input id='port' placeholder='12345' type='number' min='1' max='65535'>
+			</div>
+
+			<div>
+				<label for='nat'>Available over the internet</label>
+				<input id='nat' type='checkbox'>
+			</div>
+
+			<div>
+				<button class='start-stop'>Start</button>
+				<span class='status-light' style='background-color: red' title='stopped'>
+			</div>
 		</div>
 
-		<h3>Allowed Users<button id='offer' class='add'>+</button></h3>
+
+		<h3>Devices<button id='offer' class='add'>+</button></h3>
 		<div class='table-scroll'>
 			<table id='clients'></table>
 		</div>
@@ -140,8 +162,9 @@
 			}
 			ipcRenderer.on('update-server', updateServer)
 
-			$('div#server button.stop').click(() => ipcRenderer.send('stop-server'))
-			$('div#server button.start').click(() => ipcRenderer.send('start-server'))
+			$('input#nat')[0].checked = remote.getGlobal('config').nat || false
+			$('input#nat').change(() => ipcRenderer.send('toggle-checkbox', this.checked))
+			$('div#server button.start-stop').click(() => ipcRenderer.send('toggle-server'))
 			$('button#offer').click(() => ipcRenderer.send('offer'))
 			$('button#addFolder').click(() => ipcRenderer.send('add-folder'))
 
