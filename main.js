@@ -81,8 +81,14 @@ function showMainWindow() {
 	}
 }
 
+if (!app.requestSingleInstanceLock()) {
+	app.quit()
+	return
+}
+
 app.on('window-all-closed', () => {})
 app.on('ready', appReady)
+app.on('second-instance', showMainWindow)
 
 app.on('will-quit', (event) => {
 	if (server) {
