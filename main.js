@@ -1,5 +1,5 @@
 
-const {app, BrowserWindow, ipcMain, dialog} = require('electron')
+const {app, BrowserWindow, ipcMain, dialog, Menu, Tray} = require('electron')
 const os = require('os')
 const fs = require('fs')
 const util = require('util')
@@ -26,9 +26,24 @@ global.defaultPort = 12300
 
 
 
-let mainWindow
+let mainWindow = null
+let tray = null
+let trayMenu = null
 
 function appReady() {
+	tray = new Tray(__dirname+'/img/tray.png')
+	tray.on('double-click', showMainWindow)
+	trayMenu = Menu.buildFromTemplate([
+		{ label: 'Open', click: showMainWindow },
+		{ label: '', type: 'separator' },
+		{ label: 'Start', click: startServer },
+		{ label: 'Stop', click: stopServer },
+		{ label: '', type: 'separator' },
+		{ label: 'Quit', click: app.quit },
+	])
+	tray.setContextMenu(trayMenu)
+	updateTray()
+
 	if (fs.existsSync(configPath)) {
 		global.config = JSON.parse(fs.readFileSync(configPath))
 	} else {
@@ -42,22 +57,59 @@ function appReady() {
 
 	autoUpdater.checkForUpdatesAndNotify()
 
-
 	startServer()
 
-
-
-	mainWindow = new BrowserWindow({width: 800, height: 600, resizable: false})
-	mainWindow.loadFile('index.html')
-
-// 	mainWindow.webContents.openDevTools()
-
-	mainWindow.on('closed', () => mainWindow = null)
+	showMainWindow()
 }
 
-app.on('window-all-closed', () => app.quit())
+function showMainWindow() {
+	if (!mainWindow) {
+		mainWindow = new BrowserWindow({width: 800, height: 600, resizable: false, skipTaskbar: true})
+		mainWindow.loadFile('index.html')
+		app.dock.show()
+
+// 	 	mainWindow.webContents.openDevTools()
+
+		mainWindow.on('closed', () => {
+			mainWindow = null
+			app.dock.hide()
+		})
+	}
+}
+
+app.on('window-all-closed', () => {})
 app.on('ready', appReady)
 
+app.on('will-quit', (event) => {
+	if (server) {
+		event.preventDefault()
+		stopServer()
+		setTimeout(app.quit, 3000)
+	}
+})
+
+function updateTray() {
+	var trayIcon
+	if (server) {
+		trayMenu.items[2].enabled = false
+		trayMenu.items[3].enabled = true
+		if (os.platform == 'win') {
+			trayIcon = __dirname + '/img/tray-win.ico'
+		} else {
+			trayIcon = __dirname + '/img/tray.png'
+		}
+
+	} else {
+		trayMenu.items[2].enabled = true
+		trayMenu.items[3].enabled = false
+		if (os.platform == 'win') {
+			trayIcon = __dirname + '/img/tray-win-inactive.ico'
+		} else {
+			trayIcon = __dirname + '/img/tray-inactive.png'
+		}
+	}
+	tray.setImage(trayIcon)
+}
 
 
 function sendUpdateServer(dest) {
@@ -144,7 +196,7 @@ function updateServerAddresses(addresses) {
 			}
 			serverStateChanged()
 		})
-	}, 2000)
+	}, addresses.length ? 2000 : 0)
 	serverStateChanged()
 }
 
@@ -374,6 +426,8 @@ function serverStateChanged() {
 	if (offerWindow) {
 		offerWindow.send('update-server')
 	}
+
+	updateTray()
 }
 
 function clientsChanged() {
