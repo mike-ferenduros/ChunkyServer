@@ -98,6 +98,9 @@ Server.prototype.refreshPublicIP = function(cb) {
 }
 
 Server.prototype.getMapping = function(cb) {
+	if (!this.upnp) {
+		return cb('?')
+	}
 	this.upnp.getMappings((err, mappings) => {
 		if (mappings) {
 			for (let mapping of mappings) {

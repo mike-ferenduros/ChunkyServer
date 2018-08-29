@@ -32,6 +32,7 @@ let trayMenu = null
 
 function appReady() {
 	tray = new Tray(__dirname+'/img/tray.png')
+	tray.on('click', showMainWindow)
 	tray.on('double-click', showMainWindow)
 	trayMenu = Menu.buildFromTemplate([
 		{ label: 'Open', click: showMainWindow },
@@ -66,7 +67,7 @@ function showMainWindow() {
 	if (!mainWindow) {
 		mainWindow = new BrowserWindow({width: 800, height: 600, resizable: false, skipTaskbar: true})
 		mainWindow.loadFile('index.html')
-		if (app.dock) {}
+		if (app.dock) {
 			app.dock.show()
 		}
 
@@ -74,21 +75,21 @@ function showMainWindow() {
 
 		mainWindow.on('closed', () => {
 			mainWindow = null
-			if (app.dock) {}
+			if (app.dock) {
 				app.dock.hide()
 			}
 		})
 	}
 }
 
-if (!app.requestSingleInstanceLock()) {
+let alreadyRunning = app.makeSingleInstance(() => showMainWindow())
+if (alreadyRunning) {
 	app.quit()
 	return
 }
 
 app.on('window-all-closed', () => {})
 app.on('ready', appReady)
-app.on('second-instance', showMainWindow)
 
 app.on('will-quit', (event) => {
 	if (server) {
