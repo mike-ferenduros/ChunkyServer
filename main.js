@@ -64,8 +64,10 @@ function appReady() {
 }
 
 function showMainWindow() {
-	if (!mainWindow) {
-		mainWindow = new BrowserWindow({width: 800, height: 600, resizable: false, skipTaskbar: true})
+	if (mainWindow) {
+		mainWindow.show()
+	} else {
+		mainWindow = new BrowserWindow({width: 800, height: 600, resizable: false})
 		mainWindow.loadFile('index.html')
 		if (app.dock) {
 			app.dock.show()
@@ -82,7 +84,7 @@ function showMainWindow() {
 	}
 }
 
-let alreadyRunning = app.makeSingleInstance(() => showMainWindow())
+let alreadyRunning = app.makeSingleInstance(showMainWindow)
 if (alreadyRunning) {
 	app.quit()
 	return
