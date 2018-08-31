@@ -356,6 +356,13 @@ function toggleNat(event, enable) {
 	}
 }
 
+function retryNat(event) {
+	console.log('retryNat')
+	if (server) {
+		server.retryNat()
+	}
+}
+
 function setPort(event, port) {
 	console.log('setPort ' + port)
 	let p = Number(port)
@@ -369,6 +376,7 @@ ipcMain.on('add-folder', addFolder)
 ipcMain.on('remove-folder', removeFolder)
 ipcMain.on('remove-client', removeClient)
 ipcMain.on('toggle-nat', toggleNat)
+ipcMain.on('retry-nat', retryNat)
 ipcMain.on('set-port', setPort)
 
 
@@ -429,6 +437,7 @@ function serverStateChanged() {
 	global.serverState = {
 		running: server != null,
 		status: server ? 'running' : 'stopped',
+		nat: server ? server.natState : 'stopped',
 		addresses: addresses.join(', '),
 		dnsSent: lastSentAddressesReceived
 	}

@@ -102,6 +102,27 @@
 				margin-bottom: 20px;
 			}
 
+			div#nat-status .failed-message-container .retry { display: none }		/*potentially confusing (stays visible even if user has successfully forwarded ports)*/
+			div#nat-status .failed-message-container { visibility: hidden }
+			div#nat-status.failed .failed-message-container { 
+				visibility: visible;
+			}
+			div #nat-status .failed-message {
+				font-size: 12px;
+				font-style: italic;
+			}
+
+			div#nat-status .status-light {
+				background-color: #EEE;
+				width: 10px;
+				height: 10px;
+				border-radius: 5px;
+				margin-bottom: 1px;
+			}
+			div#nat-status.creating .status-light { background-color: orange }
+			div#nat-status.failed .status-light { background-color: purple }
+			div#nat-status.success .status-light { background-color: green }
+
 		</style>
 	</head>
 	<body>
@@ -117,9 +138,12 @@
 				<input id='port' placeholder='12345' type='number' min='1' max='65535'>
 			</div>
 
-			<div>
+			<div id='nat-status'>
+				<span class='status-light'></span>
 				<label for='nat'>Connect over the internet</label>
 				<input id='nat' type='checkbox'>
+				<br>
+				<span class='failed-message-container'><span class='failed-message'>Auto port-mapping failed; please manually forward the port on your router</span> <button class='retry'>Retry</button></span>
 			</div>
 
 		</div>
@@ -169,6 +193,9 @@
 				$('div#server').toggleClass('running', serverState.running)
 				$('input#port').prop('disabled', serverState.running)
 
+				let port = remote.getGlobal('config').port || remote.getGlobal('defaultPort')
+				$('div#nat-status .failed-message').text('Auto port-mapping failed; please manually forward TCP port '+port+' on your router')
+
 				$('button.start-stop').text(serverState.running ? 'Stop' : 'Start')
 				if (!serverState.running) {
 					$('span.server-status').css('background-color', 'red')
@@ -178,6 +205,7 @@
 					$('span.server-status').css('background-color', 'green')
 				}
 				$('span.server-status').prop('title', serverState.addresses)
+				$('#nat-status').prop('class', serverState.nat)
 			}
 			ipcRenderer.on('update-server', updateServer)
 
@@ -188,7 +216,9 @@
 			}
 
 			$('input#nat').change(() => ipcRenderer.send('toggle-nat', $('input#nat')[0].checked))
+			$('div#nat-status button.retry').click(() => ipcRenderer.send('retry-nat'))
 			$('input#port').change(() => ipcRenderer.send('set-port', $('input#port')[0].value))
+
 			$('button.start-stop').click(() => ipcRenderer.send('toggle-server'))
 			$('button#offer').click(() => ipcRenderer.send('offer'))
 			$('button#addFolder').click(() => ipcRenderer.send('add-folder'))

@@ -14,6 +14,10 @@ module.exports = function(port, ttl) {
 	return new Server(port, ttl)
 }
 
+const NAT_STATE_DISABLED = 'disabled'
+const NAT_STATE_CREATING = 'creating'
+const NAT_STATE_SUCCESS = 'success'
+const NAT_STATE_FAILED = 'failed'
 
 function Server(cert, port, ttl) {
 	EventEmitter.call(this)
@@ -28,7 +32,7 @@ function Server(cert, port, ttl) {
 	this.publicPort = null
 	this.publicIP = null
 	this.running = true
-	this.nat = false
+	this.natState = NAT_STATE_DISABLED
 
 	this.https = https.createServer(cert, this.server)
 
@@ -59,25 +63,32 @@ Server.prototype.stop = function() {
 	this.updateNat()
 }
 
-Server.prototype.updateNat = function() {
-	if (global.config.nat == this.nat) {
-		return
+Server.prototype.retryNat = function() {
+	if (this.natState == NAT_STATE_FAILED) {
+		this.natState = NAT_STATE_DISABLED
+		this.updateNat()
 	}
+}
 
-	this.nat = global.config.nat && this.running
+Server.prototype.updateNat = function() {
+	let enable = global.config.nat && this.running
 
-	if (this.nat) {
-		this.refreshPublicIP(() => {
-			if (this.nat) {
-				this.refreshMapping()
+	if (enable && this.natState == NAT_STATE_DISABLED) {
+		this.setNatState(NAT_STATE_CREATING)
+		this.refreshPublicIP((err,ip) => {
+			if (this.natState == NAT_STATE_CREATING) {
+				if (err) {
+					this.setNatState(NAT_STATE_FAILED)
+				} else {
+					this.refreshMapping()
+				}
 			}
 		})
-	} else {
+	} else if (!enable && this.natState != NAT_STATE_DISABLED) {
+		this.setNatState(NAT_STATE_DISABLED)
 		this.setMappingTimeout(null)
-		this.setPublicIP(null)
-		this.setPublicPort(null)
 		this.getMapping((err,mapping) => {
-			if (mapping && !this.nat) {
+			if (mapping && this.natState == NAT_STATE_DISABLED) {
 				this.upnp.portUnmapping({public: mapping.public.port})
 				console.log('Killing mapping at public port '+mapping.public.port)
 			}
@@ -86,11 +97,11 @@ Server.prototype.updateNat = function() {
 }
 
 Server.prototype.refreshPublicIP = function(cb) {
-	if (!this.nat) {
-		return
+	if (!this.upnp) {
+		return cb('?')
 	}
 	this.upnp.externalIp((err,ip) => {
-		if (ip && this.nat) {
+		if (ip) {
 			this.setPublicIP(ip)
 		}
 		cb(err, ip)
@@ -129,6 +140,9 @@ Server.prototype.setMappingTimeout = function(seconds) {
 }
 
 Server.prototype.setPublicPort = function(port) {
+	if (this.natState == NAT_STATE_FAILED || this.natState == NAT_STATE_DISABLED) {
+		port = null
+	}
 	if (port != this.publicPort) {
 		this.publicPort = port
 		this.emit('public-address-changed')
@@ -137,10 +151,25 @@ Server.prototype.setPublicPort = function(port) {
 }
 
 Server.prototype.setPublicIP = function(ip) {
+	if (this.natState == NAT_STATE_FAILED || this.natState == NAT_STATE_DISABLED) {
+		ip = null
+	}
 	if (ip != this.publicIP) {
 		this.publicIP = ip
 		this.emit('public-address-changed')
 		console.log('Updated public IP to '+ip)
+	}
+}
+
+Server.prototype.setNatState = function(state) {
+	if (state != this.natState) {
+		this.natState = state
+		if (state == NAT_STATE_FAILED || state == NAT_STATE_DISABLED) {
+			this.publicIP = null
+			this.publicPort = null
+		}
+		this.emit('public-address-changed')
+		console.log('Nat state -> '+state)
 	}
 }
 
@@ -164,12 +193,10 @@ Server.prototype.addresses = function() {
 
 	let addresses = this.localAddresses(this.privatePort)
 
-	if (this.nat) {
-		if (this.publicIP && this.publicPort) {
-			addresses.unshift(this.publicIP+':'+this.publicPort)
-		} else {
-			addresses.unshift('0.0.0.0:'+this.privatePort)
-		}
+	if (this.natState == NAT_STATE_SUCCESS && this.publicIP && this.publicPort) {
+		addresses.unshift(this.publicIP+':'+this.publicPort)
+	} else if (this.natState != NAT_STATE_DISABLED) {
+		addresses.unshift('0.0.0.0:'+this.privatePort)
 	}
 	return addresses
 }
@@ -199,6 +226,7 @@ Server.prototype.refreshMapping = function() {
 	this.getMapping((err, mapping) => {
 		if (mapping) {
 			this.setPublicPort(mapping.public.port)
+			this.setNatState(NAT_STATE_SUCCESS)
 			console.log('Existing mapping valid for another '+mapping.ttl+'s')
 			this.setMappingTimeout(mapping.ttl+1)
 		} else {
@@ -208,11 +236,11 @@ Server.prototype.refreshMapping = function() {
 					if (mapping) {
 						console.log('New mapping '+[this.publicIP,mapping.public.port].join(':')+' -> '+[mapping.private.host,mapping.private.port].join(':'))
 						this.setPublicPort(mapping.public.port)
+						this.setNatState(NAT_STATE_SUCCESS)
 						this.setMappingTimeout(mapping.ttl+1)
 					} else {
 						this.setPublicPort(null)
-						this.setMappingTimeout(60)
-						console.log('Failed to create mapping, retrying in 60s')
+						this.setNatState(NAT_STATE_FAILED)
 					}
 				})
 			})
