@@ -56,12 +56,38 @@ function appReady() {
 		saveConfig()
 	}
 
-	autoUpdater.checkForUpdatesAndNotify()
+	global.version = { current: app.getVersion(), update: null }
+	autoUpdater.on('update-available', (info) => {
+		console.log('update-available', info)
+	})
+	autoUpdater.on('update-downloaded', (info) => {
+		console.log('update-downloaded', info)
+		global.version.update = info
+		console.log(info)
+		mainWindow.send('update-updater')
+	})
+
+	checkForUpdate()
 
 	startServer()
 
 	showMainWindow()
 }
+
+function checkForUpdate() {
+	console.log('Checking for update')
+	autoUpdater.checkForUpdatesAndNotify()
+	//Check once per hour
+	setTimeout(() => checkForUpdate, 3600 * 1000)
+}
+
+function installUpdate() {
+	if (global.version.update) {
+		global.version.installingUpdate = true
+		autoUpdater.quitAndInstall(true, true)
+	}
+}
+
 
 function showMainWindow() {
 	if (mainWindow) {
@@ -73,7 +99,7 @@ function showMainWindow() {
 			app.dock.show()
 		}
 
-// 	 	mainWindow.webContents.openDevTools()
+//  	 	mainWindow.webContents.openDevTools()
 
 		mainWindow.on('closed', () => {
 			mainWindow = null
@@ -94,7 +120,7 @@ app.on('window-all-closed', () => {})
 app.on('ready', appReady)
 
 app.on('will-quit', (event) => {
-	if (server) {
+	if (server && !global.version.installingUpdate) {
 		event.preventDefault()
 		stopServer()
 		setTimeout(app.quit, 3000)
@@ -378,6 +404,7 @@ ipcMain.on('remove-client', removeClient)
 ipcMain.on('toggle-nat', toggleNat)
 ipcMain.on('retry-nat', retryNat)
 ipcMain.on('set-port', setPort)
+ipcMain.on('install-update', installUpdate)
 
 
 

@@ -123,9 +123,39 @@
 			div#nat-status.failed .status-light { background-color: purple }
 			div#nat-status.success .status-light { background-color: green }
 
+			div#version {
+				position: fixed;
+				bottom: 16px;
+				right: 16px;
+				font-size: 10px;
+				font-style: italic;
+			}
+			
+			button#update { 
+				float: right;
+				background-color: #44C;
+				opacity: 0.9;
+				color: white;
+				width: 80px;
+				border: none;
+				text-align: center;
+				display: inline-block;
+				font-size: 13px;
+			}
+			button#update:hover {
+				content: 'Install';
+				background-color: #55F;
+			}
+			
+			button { 
+				cursor: pointer;
+			}
+
 		</style>
 	</head>
+
 	<body>
+		<button id='update'>Update Ready</button>
 		<h1>
 			<span class='server-status status-light' style='background-color: red; margin-bottom: 2px' title='stopped'></span>
 			<script>document.write(require('os').hostname())</script>
@@ -160,6 +190,10 @@
 			<table id='folders'></table>
 		</div>
 
+		<div id='version'>
+			<span class='current'>v0.0.0</span>
+		</div>
+
 		<script>
 			function updateFolders() {
 				$('table#folders').empty().append(remote.getGlobal('config').folders.map((folder) => {
@@ -187,6 +221,19 @@
 				}))
 			}
 			ipcRenderer.on('update-clients', updateClients)
+
+			function updateUpdater() {
+				let version = remote.getGlobal('version')
+				console.log('updateUpdater', version.current, version.update)
+				$('#version').text('v' + version.current)
+
+				if (version.update) {
+					$('#update').show()
+				} else {
+					$('#update').hide()
+				}
+			}
+			ipcRenderer.on('update-updater', updateUpdater)
 
 			function updateServer() {
 				serverState = remote.getGlobal('serverState')
@@ -222,10 +269,12 @@
 			$('button.start-stop').click(() => ipcRenderer.send('toggle-server'))
 			$('button#offer').click(() => ipcRenderer.send('offer'))
 			$('button#addFolder').click(() => ipcRenderer.send('add-folder'))
+			$('button#update').click(() => ipcRenderer.send('install-update'))
 
 			updateFolders()
 			updateClients()
 			updateServer()
+			updateUpdater()
 		</script>
 	</body>
 </html>
