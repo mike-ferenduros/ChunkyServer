@@ -239,6 +239,29 @@ function updateServerAddresses(addresses) {
 	serverStateChanged()
 }
 
+function deauthClient(client) {
+	//This is just a courtesy to the client, so they know they got deauthed.
+	//Otherwise they'll be left with a dangling address - this address *may* still work
+	//in which case they'll get 401s and figure it out anyway.
+	let recordid = client.recordid || client.key
+	console.log('Deauthing client ' + recordid)
+
+	let req = {
+		url: 'https://facetube.fish:20051/update',
+		body: JSON.stringify({addresses: ['deauth'], keys: [recordid]}),
+		headers: {'Content-Type':'application/json'},
+		strictSSL: false
+	}
+	request.post(req, (err,resp,body) => {
+
+		if (err) {
+			console.log('Failed to deauth: "' + err + '"')
+		} else {
+			console.log('Delivered deauth: "'+body+'"')
+		}
+	})
+}
+
 
 
 function handleFolders(req,res) {
@@ -368,9 +391,14 @@ function removeFolder(event, arg) {
 }
 
 function removeClient(event, arg) {
-	global.config.clients = global.config.clients.filter((client) => client.key != arg.key)
-	saveConfig()
-	clientsChanged()
+	let client = global.config.clients.filter((c) => c.key == arg.key)[0]
+	if (client) {
+		deauthClient(client)
+
+		global.config.clients = global.config.clients.filter((c) => c.key != client.key)
+		saveConfig()
+		clientsChanged()
+	}
 }
 
 function toggleNat(event, enable) {
